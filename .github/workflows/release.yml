@@ -111,5 +111,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  krew-release:
+    needs: [bump, release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ needs.bump.outputs.new_version }}
+
       - name: Update new version in krew-index
         uses: rajatjindal/krew-release-bot@v0.0.46
+        env:
+          GITHUB_REF: refs/tags/${{ needs.bump.outputs.new_version }}
