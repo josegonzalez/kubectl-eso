@@ -1,9 +1,22 @@
 package cmd
 
 import (
+	"path/filepath"
+	"strings"
+
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
+
+// PluginName returns the command name to display in help text.
+// When invoked as a kubectl plugin (argv[0] starts with "kubectl-"),
+// it returns "kubectl eso" (with a space) per Krew best practices.
+func PluginName(argv0 string) string {
+	if strings.HasPrefix(filepath.Base(argv0), "kubectl-") {
+		return "kubectl eso"
+	}
+	return "kubectl-eso"
+}
 
 // NewRootCmd creates the root command for kubectl-eso.
 func NewRootCmd(streams genericclioptions.IOStreams) *cobra.Command {
