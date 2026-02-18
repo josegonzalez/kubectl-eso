@@ -120,6 +120,6 @@ jobs:
           ref: refs/tags/${{ needs.bump.outputs.new_version }}
 
       - name: Update new version in krew-index
-        uses: rajatjindal/krew-release-bot@v0.0.46
+        uses: rajatjindal/krew-release-bot@v0.0.47
         env:
           GITHUB_REF: refs/tags/${{ needs.bump.outputs.new_version }}
