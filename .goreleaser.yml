@@ -1,0 +1,44 @@
+version: 2
+
+builds:
+  - id: kubectl-eso
+    main: ./cmd/kubectl-eso
+    binary: kubectl-eso
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/josegonzalez/kubectl-eso/pkg/cmd.Version={{.Version}}
+      - -X github.com/josegonzalez/kubectl-eso/pkg/cmd.Commit={{.Commit}}
+      - -X github.com/josegonzalez/kubectl-eso/pkg/cmd.Date={{.Date}}
+
+archives:
+  - id: kubectl-eso
+    builds:
+      - kubectl-eso
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+      - scripts/kubectl_complete-eso
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
