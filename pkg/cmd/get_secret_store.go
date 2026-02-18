@@ -21,7 +21,7 @@ func NewGetSecretStoreCmd(streams genericclioptions.IOStreams, configFlags *gene
 	cmd := &cobra.Command{
 		Use:     "secret-store",
 		Short:   "List SecretStores",
-		Aliases: []string{"secret-stores", "ss", "SecretStore", "SecretStores"},
+		Aliases: []string{"secret-stores", "secretstores.external-secrets.io"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGetStoreVariant(cmd, streams, configFlags, false)
 		},
@@ -37,7 +37,7 @@ func NewGetClusterSecretStoreCmd(streams genericclioptions.IOStreams, configFlag
 	return &cobra.Command{
 		Use:     "cluster-secret-store",
 		Short:   "List ClusterSecretStores",
-		Aliases: []string{"cluster-secret-stores", "css", "ClusterSecretStore", "ClusterSecretStores"},
+		Aliases: []string{"cluster-secret-stores", "clustersecretstores.external-secrets.io"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGetStoreVariant(cmd, streams, configFlags, true)
 		},

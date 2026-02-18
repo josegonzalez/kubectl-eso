@@ -16,7 +16,7 @@ func NewDescribeExternalSecretCmd(streams genericclioptions.IOStreams, configFla
 	return &cobra.Command{
 		Use:     "external-secret <name>",
 		Short:   "Show details of an ExternalSecret",
-		Aliases: []string{"external-secrets", "es", "ExternalSecret", "ExternalSecrets"},
+		Aliases: []string{"external-secrets", "externalsecrets.external-secrets.io"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDescribeExternalSecret(cmd, streams, configFlags, args[0])

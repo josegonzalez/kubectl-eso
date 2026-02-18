@@ -16,7 +16,7 @@ func NewGetExternalSecretCmd(streams genericclioptions.IOStreams, configFlags *g
 	cmd := &cobra.Command{
 		Use:     "external-secret",
 		Short:   "List ExternalSecrets",
-		Aliases: []string{"external-secrets", "es", "ExternalSecret", "ExternalSecrets"},
+		Aliases: []string{"external-secrets", "externalsecrets.external-secrets.io"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGetExternalSecret(cmd, streams, configFlags)
 		},

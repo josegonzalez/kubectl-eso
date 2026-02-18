@@ -4,9 +4,9 @@ import "testing"
 
 func TestConstants(t *testing.T) {
 	tests := []struct {
-		name  string
-		got   string
-		want  string
+		name string
+		got  string
+		want string
 	}{
 		{"LabelManaged", LabelManaged, "reconcile.external-secrets.io/managed"},
 		{"AnnotationImported", AnnotationImported, "kubectl-eso.io/imported"},

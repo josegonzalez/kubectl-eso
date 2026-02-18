@@ -17,7 +17,7 @@ func NewGetSecretCmd(streams genericclioptions.IOStreams, configFlags *genericcl
 	cmd := &cobra.Command{
 		Use:     "secret",
 		Short:   "List Secrets with ESO-managed indicator",
-		Aliases: []string{"secrets", "Secret", "Secrets"},
+		Aliases: []string{"secrets"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGetSecret(cmd, streams, configFlags)
 		},

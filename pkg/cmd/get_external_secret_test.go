@@ -130,4 +130,3 @@ func TestPrintExternalSecretTable(t *testing.T) {
 		})
 	}
 }
-
