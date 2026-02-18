@@ -16,7 +16,7 @@ func NewDescribeSecretStoreCmd(streams genericclioptions.IOStreams, configFlags 
 	return &cobra.Command{
 		Use:     "secret-store <name>",
 		Short:   "Show details of a SecretStore",
-		Aliases: []string{"secret-stores", "ss", "SecretStore", "SecretStores"},
+		Aliases: []string{"secret-stores", "secretstores.external-secrets.io"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDescribeStoreVariant(cmd, streams, configFlags, args[0], false)
@@ -29,7 +29,7 @@ func NewDescribeClusterSecretStoreCmd(streams genericclioptions.IOStreams, confi
 	return &cobra.Command{
 		Use:     "cluster-secret-store <name>",
 		Short:   "Show details of a ClusterSecretStore",
-		Aliases: []string{"cluster-secret-stores", "css", "ClusterSecretStore", "ClusterSecretStores"},
+		Aliases: []string{"cluster-secret-stores", "clustersecretstores.external-secrets.io"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDescribeStoreVariant(cmd, streams, configFlags, args[0], true)

@@ -18,7 +18,7 @@ func NewDescribeSecretCmd(streams genericclioptions.IOStreams, configFlags *gene
 	cmd := &cobra.Command{
 		Use:     "secret <name>",
 		Short:   "Show details of a Secret",
-		Aliases: []string{"secrets", "Secret", "Secrets"},
+		Aliases: []string{"secrets"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDescribeSecret(cmd, streams, configFlags, args[0])

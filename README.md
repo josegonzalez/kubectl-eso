@@ -142,7 +142,6 @@ refresh interval, and ready status.
 ```bash
 # List ExternalSecrets
 kubectl eso get external-secret
-kubectl eso get es                    # short alias
 kubectl eso get external-secrets -A   # all namespaces
 
 # Output as JSON
@@ -180,7 +179,7 @@ and age.
 ```bash
 # List SecretStores
 kubectl eso get secret-store
-kubectl eso get ss    # short alias
+kubectl eso get secret-stores    # plural alias
 ```
 
 ### `kubectl eso get cluster-secret-store [flags]`
@@ -195,7 +194,7 @@ type, and age.
 ```bash
 # List ClusterSecretStores
 kubectl eso get cluster-secret-store
-kubectl eso get css    # short alias
+kubectl eso get cluster-secret-stores    # plural alias
 ```
 
 ### `kubectl eso describe external-secret NAME [flags]`
@@ -321,10 +320,10 @@ kubectl eso version
 
 | Command | Aliases |
 | ------- | ------- |
-| `external-secret` | `es`, `external-secrets` |
+| `external-secret` | `external-secrets`, `externalsecrets.external-secrets.io` |
 | `secret` | `secrets` |
-| `secret-store` | `ss`, `secret-stores` |
-| `cluster-secret-store` | `css`, `cluster-secret-stores` |
+| `secret-store` | `secret-stores`, `secretstores.external-secrets.io` |
+| `cluster-secret-store` | `cluster-secret-stores`, `clustersecretstores.external-secrets.io` |
 
 ## Helm Secret Filtering
 
