@@ -1,5 +1,8 @@
 ---
 extends: default
+ignore:
+  - .krew.yaml
+  - dist/
 rules:
   line-length: disable
   truthy:
