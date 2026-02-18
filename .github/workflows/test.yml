@@ -1,0 +1,88 @@
+---
+name: Test
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Run tests with coverage
+        run: go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Check coverage
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          FUNC_OUTPUT=$(go tool cover -func=coverage.out)
+          TOTAL_COVERAGE=$(echo "$FUNC_OUTPUT" | grep "^total:" | awk '{print $3}' | sed 's/%//')
+
+          if [ "$(echo "$TOTAL_COVERAGE < 95" | bc)" -eq 1 ]; then
+            STATUS="FAILED"
+            CONCLUSION="failure"
+            ICON=":x:"
+          else
+            STATUS="PASSED"
+            CONCLUSION="success"
+            ICON=":white_check_mark:"
+          fi
+
+          # Build per-function table rows
+          TABLE_ROWS=$(echo "$FUNC_OUTPUT" | grep -v "^total:" | while IFS= read -r line; do
+            FILE=$(echo "$line" | awk '{print $1}' | sed 's|github.com/josegonzalez/kubectl-eso/||; s/:[0-9]*:$//')
+            FUNC=$(echo "$line" | awk '{print $2}')
+            COV=$(echo "$line" | awk '{print $3}')
+            echo "| \`${FILE}\` | \`${FUNC}\` | ${COV} |"
+          done)
+
+          # Build report markdown
+          REPORT=$(cat <<EOREPORT
+          ## Code Coverage Report
+
+          **Status: ${STATUS}** ${ICON} — Total coverage: **${TOTAL_COVERAGE}%** (threshold: 95%)
+
+          ### Coverage by Function
+
+          | File | Function | Coverage |
+          |------|----------|----------|
+          ${TABLE_ROWS}
+
+          ---
+          | **Total** | | **${TOTAL_COVERAGE}%** |
+          EOREPORT
+          )
+
+          # Write step summary
+          echo "$REPORT" >> "$GITHUB_STEP_SUMMARY"
+
+          # Create check run visible in PR checks section
+          DETAILS_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          jq -n \
+            --arg name "Code Coverage" \
+            --arg sha "$HEAD_SHA" \
+            --arg conclusion "$CONCLUSION" \
+            --arg title "${TOTAL_COVERAGE}% coverage — ${STATUS} (threshold: 95%)" \
+            --arg summary "$REPORT" \
+            --arg url "$DETAILS_URL" \
+            '{name: $name, head_sha: $sha, status: "completed", conclusion: $conclusion, details_url: $url, output: {title: $title, summary: $summary}}' \
+          | gh api repos/"$GITHUB_REPOSITORY"/check-runs --method POST --input -
+
+          if [ "$STATUS" = "FAILED" ]; then
+            echo "Coverage is below 95%!"
+            exit 1
+          fi
