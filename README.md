@@ -12,11 +12,21 @@ are supported.
 
 ## Installation
 
+### Via krew
+
+```bash
+kubectl krew install eso
+```
+
+### Via go install
+
 ```bash
 go install github.com/josegonzalez/kubectl-eso/cmd/kubectl-eso@latest
 ```
 
-Download pre-built binaries from the [releases page](https://github.com/josegonzalez/kubectl-eso/releases).
+### Pre-built binaries
+
+Download from the [releases page](https://github.com/josegonzalez/kubectl-eso/releases).
 
 ## Building from Source
 
@@ -92,6 +102,8 @@ Annotates an existing Kubernetes Secret for ESO adoption.
 Adds labels and annotations so a future ExternalSecret with
 `creationPolicy: Merge` can adopt the Secret.
 
+**Requires:** `get` and `update` on `secrets`
+
 **Labels/annotations applied:**
 
 - Label: `reconcile.external-secrets.io/managed: "true"`
@@ -123,6 +135,8 @@ kubectl eso annotate my-secret --store my-store --dry-run
 Lists ExternalSecrets with target Secret, store ref,
 refresh interval, and ready status.
 
+**Requires:** `list` on `externalsecrets`
+
 **Examples:**
 
 ```bash
@@ -137,7 +151,10 @@ kubectl eso get external-secret -o json
 
 ### `kubectl eso get secret [flags]`
 
-Lists Secrets (excluding Helm release secrets) with an ESO-managed indicator.
+Lists Secrets (excluding Helm release secrets) with an
+ESO-managed indicator.
+
+**Requires:** `list` on `secrets`
 
 **Table columns:** NAME, NAMESPACE (if `-A`), TYPE, ESO-MANAGED, STORE, AGE
 
@@ -153,7 +170,10 @@ kubectl eso get secret -A
 
 ### `kubectl eso get secret-store [flags]`
 
-Lists SecretStores with health status, provider type, and age.
+Lists SecretStores with health status, provider type,
+and age.
+
+**Requires:** `list` on `secretstores`
 
 **Examples:**
 
@@ -165,7 +185,10 @@ kubectl eso get ss    # short alias
 
 ### `kubectl eso get cluster-secret-store [flags]`
 
-Lists ClusterSecretStores with health status, provider type, and age.
+Lists ClusterSecretStores with health status, provider
+type, and age.
+
+**Requires:** `list` on `clustersecretstores`
 
 **Examples:**
 
@@ -179,6 +202,8 @@ kubectl eso get css    # short alias
 
 Shows detailed sync status including conditions, target
 secret, store ref, refresh interval, and last sync time.
+
+**Requires:** `get` on `externalsecrets`
 
 **Examples:**
 
@@ -195,6 +220,8 @@ kubectl eso describe external-secret my-es -o yaml
 Views Secret data. Base64-encoded by default, decoded with
 `--decode`/`-d`. Shows a warning if the Secret is not
 ESO-managed. Errors if the Secret is a Helm release secret.
+
+**Requires:** `get` on `secrets`
 
 **Flags:**
 
@@ -220,6 +247,8 @@ kubectl eso describe secret my-secret -o yaml
 Shows SecretStore health details including conditions,
 provider type, and last transition time.
 
+**Requires:** `get` on `secretstores`
+
 **Examples:**
 
 ```bash
@@ -231,6 +260,8 @@ kubectl eso describe secret-store my-store
 
 Shows ClusterSecretStore health details including conditions,
 provider type, and last transition time.
+
+**Requires:** `get` on `clustersecretstores`
 
 **Examples:**
 
@@ -244,6 +275,8 @@ kubectl eso describe cluster-secret-store my-css
 Forces re-sync of an ExternalSecret by setting a
 `kubectl-eso.io/force-sync` annotation with the current
 unix timestamp.
+
+**Requires:** `get` and `update` on `externalsecrets`
 
 **Examples:**
 
@@ -302,18 +335,36 @@ Secrets with type `helm.sh/release.v1` are automatically excluded:
 
 ## RBAC Requirements
 
-| Subcommand | Resource | Verbs |
-| ---------- | -------- | ----- |
-| `annotate` | `secrets` | `get`, `update` |
-| `get secret` | `secrets` | `list` |
-| `describe secret` | `secrets` | `get` |
-| `get external-secret` | `externalsecrets` | `list` |
-| `describe external-secret` | `externalsecrets` | `get` |
-| `sync` | `externalsecrets` | `get`, `update` |
-| `get secret-store` | `secretstores` | `list` |
-| `describe secret-store` | `secretstores` | `get` |
-| `get cluster-secret-store` | `clustersecretstores` | `list` |
-| `describe cluster-secret-store` | `clustersecretstores` | `get` |
+The following Role and ClusterRole provide the minimum
+permissions needed for all plugin commands:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubectl-eso
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "update"]
+  - apiGroups: ["external-secrets.io"]
+    resources: ["externalsecrets"]
+    verbs: ["get", "list", "update"]
+  - apiGroups: ["external-secrets.io"]
+    resources: ["secretstores"]
+    verbs: ["get", "list"]
+```
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubectl-eso
+rules:
+  - apiGroups: ["external-secrets.io"]
+    resources: ["clustersecretstores"]
+    verbs: ["get", "list"]
+```
 
 ## License
 
