@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"text/tabwriter"
 
 	"github.com/josegonzalez/kubectl-eso/pkg/eso"
 	"github.com/spf13/cobra"
@@ -34,12 +33,12 @@ func runGetSecret(cmd *cobra.Command, streams genericclioptions.IOStreams, confi
 	output, _ := cmd.Flags().GetString("output")
 	noHeaders, _ := cmd.Flags().GetBool("no-headers")
 
-	clients, err := getClients(configFlags)
+	clients, err := getClientsFn(configFlags)
 	if err != nil {
 		return err
 	}
 
-	namespace, err := getNamespace(configFlags)
+	namespace, err := getNamespaceFn(configFlags)
 	if err != nil {
 		return err
 	}
@@ -73,19 +72,18 @@ func runGetSecret(cmd *cobra.Command, streams genericclioptions.IOStreams, confi
 }
 
 func printSecretTable(out io.Writer, secrets []corev1.Secret, allNamespaces bool, noHeaders bool) error {
-	w := tabwriter.NewWriter(out, 0, 4, 2, ' ', 0)
-	defer w.Flush()
+	tw := newTableWriter(out)
 
 	if !noHeaders {
 		if allNamespaces {
-			fmt.Fprint(w, "NAMESPACE\t")
+			tw.fprint("NAMESPACE\t")
 		}
-		fmt.Fprintln(w, "NAME\tTYPE\tESO-MANAGED\tSTORE\tAGE")
+		tw.fprintln("NAME\tTYPE\tESO-MANAGED\tSTORE\tAGE")
 	}
 
 	for _, s := range secrets {
 		if allNamespaces {
-			fmt.Fprintf(w, "%s\t", s.Namespace)
+			tw.fprintf("%s\t", s.Namespace)
 		}
 
 		managed := "No"
@@ -100,8 +98,8 @@ func printSecretTable(out io.Writer, secrets []corev1.Secret, allNamespaces bool
 
 		age := formatAge(s.CreationTimestamp.Time)
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", s.Name, s.Type, managed, store, age)
+		tw.fprintf("%s\t%s\t%s\t%s\t%s\n", s.Name, s.Type, managed, store, age)
 	}
 
-	return nil
+	return tw.flush()
 }

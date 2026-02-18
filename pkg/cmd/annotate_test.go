@@ -9,6 +9,7 @@ import (
 	"github.com/josegonzalez/kubectl-eso/pkg/eso"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes/fake"
 )
 
@@ -24,7 +25,7 @@ func TestAnnotateSecret(t *testing.T) {
 		},
 	}
 
-	clientset := fake.NewSimpleClientset(secret)
+	clientset := fake.NewClientset(secret)
 
 	// Simulate the annotation logic
 	s, err := clientset.CoreV1().Secrets("default").Get(context.TODO(), "my-secret", metav1.GetOptions{})
@@ -105,3 +106,110 @@ func TestAnnotateDryRun(t *testing.T) {
 		}
 	}
 }
+
+func TestRunAnnotate(t *testing.T) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-secret",
+			Namespace: "default",
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{"key": []byte("value")},
+	}
+
+	t.Run("normal flow", func(t *testing.T) {
+		cleanup := setupFakeClients("default", nil, secret)
+		defer cleanup()
+
+		var buf bytes.Buffer
+		streams := genericclioptions.IOStreams{Out: &buf}
+		configFlags := genericclioptions.NewConfigFlags(true)
+		cmd := NewAnnotateCmd(streams, configFlags)
+		cmd.SetArgs([]string{"my-secret", "--store", "my-store"})
+
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if !strings.Contains(buf.String(), "annotated for ESO adoption") {
+			t.Errorf("expected success message, got %q", buf.String())
+		}
+	})
+
+	t.Run("dry-run", func(t *testing.T) {
+		cleanup := setupFakeClients("default", nil, secret)
+		defer cleanup()
+
+		var buf bytes.Buffer
+		streams := genericclioptions.IOStreams{Out: &buf}
+		configFlags := genericclioptions.NewConfigFlags(true)
+		cmd := NewAnnotateCmd(streams, configFlags)
+		cmd.SetArgs([]string{"my-secret", "--store", "my-store", "--dry-run"})
+
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		output := buf.String()
+		if !strings.Contains(output, eso.LabelManaged) {
+			t.Errorf("dry-run output missing managed label:\n%s", output)
+		}
+	})
+
+	t.Run("helm secret rejection", func(t *testing.T) {
+		helmSecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "helm-secret",
+				Namespace: "default",
+			},
+			Type: corev1.SecretType(eso.HelmSecretType),
+		}
+
+		cleanup := setupFakeClients("default", nil, helmSecret)
+		defer cleanup()
+
+		var buf bytes.Buffer
+		streams := genericclioptions.IOStreams{Out: &buf, ErrOut: &buf}
+		configFlags := genericclioptions.NewConfigFlags(true)
+		cmd := NewAnnotateCmd(streams, configFlags)
+		cmd.SetArgs([]string{"helm-secret"})
+
+		err := cmd.Execute()
+		if err == nil {
+			t.Fatal("expected error for helm secret, got nil")
+		}
+		if !strings.Contains(err.Error(), "Helm-managed") {
+			t.Errorf("expected Helm-managed error, got %v", err)
+		}
+	})
+
+	t.Run("missing secret error", func(t *testing.T) {
+		cleanup := setupFakeClients("default", nil)
+		defer cleanup()
+
+		var buf bytes.Buffer
+		streams := genericclioptions.IOStreams{Out: &buf, ErrOut: &buf}
+		configFlags := genericclioptions.NewConfigFlags(true)
+		cmd := NewAnnotateCmd(streams, configFlags)
+		cmd.SetArgs([]string{"nonexistent"})
+
+		err := cmd.Execute()
+		if err == nil {
+			t.Fatal("expected error for missing secret, got nil")
+		}
+	})
+}
+
+func TestRunAnnotateNoArgs(t *testing.T) {
+	var buf bytes.Buffer
+	streams := genericclioptions.IOStreams{Out: &buf, ErrOut: &buf}
+	configFlags := genericclioptions.NewConfigFlags(true)
+	cmd := NewAnnotateCmd(streams, configFlags)
+	cmd.SetArgs([]string{})
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for no args, got nil")
+	}
+}
+

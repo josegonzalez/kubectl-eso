@@ -9,7 +9,7 @@ LDFLAGS := -s -w \
 	-X $(MODULE)/pkg/cmd.Date=$(DATE)
 GOPATH := $(shell go env GOPATH)
 
-.PHONY: build install test clean lint fmt vet
+.PHONY: build install test clean lint fmt vet go-lint yaml-lint markdown-lint
 
 build:
 	@mkdir -p bin
@@ -32,4 +32,13 @@ fmt:
 vet:
 	go vet ./...
 
-lint: fmt vet
+go-lint:
+	golangci-lint run --timeout 5m
+
+yaml-lint:
+	uvx yamllint -c .yamllint.yml .
+
+markdown-lint:
+	uvx pymarkdownlnt fix .
+
+lint: fmt vet go-lint yaml-lint markdown-lint

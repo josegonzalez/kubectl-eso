@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"sort"
-	"text/tabwriter"
 
 	"github.com/josegonzalez/kubectl-eso/pkg/eso"
 	"github.com/spf13/cobra"
@@ -35,12 +34,12 @@ func runDescribeSecret(cmd *cobra.Command, streams genericclioptions.IOStreams, 
 	decode, _ := cmd.Flags().GetBool("decode")
 	output, _ := cmd.Flags().GetString("output")
 
-	clients, err := getClients(configFlags)
+	clients, err := getClientsFn(configFlags)
 	if err != nil {
 		return err
 	}
 
-	namespace, err := getNamespace(configFlags)
+	namespace, err := getNamespaceFn(configFlags)
 	if err != nil {
 		return err
 	}
@@ -67,31 +66,30 @@ func runDescribeSecret(cmd *cobra.Command, streams genericclioptions.IOStreams, 
 }
 
 func printSecretDetail(out io.Writer, name, namespace, secretType string, labels, annotations map[string]string, data map[string][]byte, decode bool) error {
-	w := tabwriter.NewWriter(out, 0, 4, 2, ' ', 0)
-	defer w.Flush()
+	tw := newTableWriter(out)
 
-	fmt.Fprintf(w, "Name:\t%s\n", name)
-	fmt.Fprintf(w, "Namespace:\t%s\n", namespace)
-	fmt.Fprintf(w, "Type:\t%s\n", secretType)
+	tw.fprintf("Name:\t%s\n", name)
+	tw.fprintf("Namespace:\t%s\n", namespace)
+	tw.fprintf("Type:\t%s\n", secretType)
 
 	managed := "No"
 	if labels != nil && labels[eso.LabelManaged] == "true" {
 		managed = "Yes"
 	}
-	fmt.Fprintf(w, "ESO-Managed:\t%s\n", managed)
+	tw.fprintf("ESO-Managed:\t%s\n", managed)
 
 	if managed == "No" {
-		fmt.Fprintln(w, "\nWARNING: This secret is not managed by External Secrets Operator")
+		tw.fprintln("\nWARNING: This secret is not managed by External Secrets Operator")
 	}
 
 	if annotations != nil {
 		if store, ok := annotations[eso.AnnotationStore]; ok {
-			fmt.Fprintf(w, "Store:\t%s\n", store)
+			tw.fprintf("Store:\t%s\n", store)
 		}
 	}
 
-	fmt.Fprintln(w, "\nData:")
-	fmt.Fprintf(w, "  KEY\tVALUE\n")
+	tw.fprintln("\nData:")
+	tw.fprintf("  KEY\tVALUE\n")
 
 	keys := make([]string, 0, len(data))
 	for k := range data {
@@ -102,11 +100,11 @@ func printSecretDetail(out io.Writer, name, namespace, secretType string, labels
 	for _, k := range keys {
 		v := data[k]
 		if decode {
-			fmt.Fprintf(w, "  %s\t%s\n", k, string(v))
+			tw.fprintf("  %s\t%s\n", k, string(v))
 		} else {
-			fmt.Fprintf(w, "  %s\t%s\n", k, base64.StdEncoding.EncodeToString(v))
+			tw.fprintf("  %s\t%s\n", k, base64.StdEncoding.EncodeToString(v))
 		}
 	}
 
-	return nil
+	return tw.flush()
 }

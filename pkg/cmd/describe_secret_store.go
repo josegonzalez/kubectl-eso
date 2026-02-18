@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"text/tabwriter"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
 	"github.com/spf13/cobra"
@@ -41,7 +40,7 @@ func NewDescribeClusterSecretStoreCmd(streams genericclioptions.IOStreams, confi
 func runDescribeStoreVariant(cmd *cobra.Command, streams genericclioptions.IOStreams, configFlags *genericclioptions.ConfigFlags, name string, clusterScoped bool) error {
 	output, _ := cmd.Flags().GetString("output")
 
-	clients, err := getClients(configFlags)
+	clients, err := getClientsFn(configFlags)
 	if err != nil {
 		return err
 	}
@@ -62,7 +61,7 @@ func runDescribeStoreVariant(cmd *cobra.Command, streams genericclioptions.IOStr
 		}
 	}
 
-	namespace, err := getNamespace(configFlags)
+	namespace, err := getNamespaceFn(configFlags)
 	if err != nil {
 		return err
 	}
@@ -83,21 +82,20 @@ func runDescribeStoreVariant(cmd *cobra.Command, streams genericclioptions.IOStr
 }
 
 func printStoreDetail(out io.Writer, name, namespace string, provider *esv1beta1.SecretStoreProvider, conditions []esv1beta1.SecretStoreStatusCondition) error {
-	w := tabwriter.NewWriter(out, 0, 4, 2, ' ', 0)
-	defer w.Flush()
+	tw := newTableWriter(out)
 
-	fmt.Fprintf(w, "Name:\t%s\n", name)
+	tw.fprintf("Name:\t%s\n", name)
 
 	if namespace != "" {
-		fmt.Fprintf(w, "Namespace:\t%s\n", namespace)
+		tw.fprintf("Namespace:\t%s\n", namespace)
 	} else {
-		fmt.Fprintf(w, "Scope:\tCluster\n")
+		tw.fprintf("Scope:\tCluster\n")
 	}
 
-	fmt.Fprintf(w, "Provider:\t%s\n", getProviderName(provider))
-	fmt.Fprintf(w, "Ready:\t%s\n", getStoreReadyStatus(conditions))
+	tw.fprintf("Provider:\t%s\n", getProviderName(provider))
+	tw.fprintf("Ready:\t%s\n", getStoreReadyStatus(conditions))
 
-	printConditionsTable(w, conditions)
+	printConditionsTable(tw, conditions)
 
-	return nil
+	return tw.flush()
 }

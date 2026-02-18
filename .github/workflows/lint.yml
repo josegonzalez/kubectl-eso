@@ -29,21 +29,29 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - name: markdownlint
-        uses: DavidAnson/markdownlint-cli2-action@v19
+        run: make markdown-lint
 
   yaml-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
-      - name: yamllint
-        uses: ibiqlik/action-yamllint@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          file_or_dir: "."
-          config_data: |
-            extends: default
-            rules:
-              line-length: disable
-              truthy:
-                check-keys: false
+          python-version: "3.x"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: yamllint
+        run: make yaml-lint

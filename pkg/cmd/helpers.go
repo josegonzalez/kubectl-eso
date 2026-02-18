@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"text/tabwriter"
 	"time"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
@@ -12,8 +13,46 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// getClients builds k8s clients from configFlags.
-func getClients(configFlags *genericclioptions.ConfigFlags) (*k8s.Clients, error) {
+// tableWriter wraps a tabwriter.Writer and tracks the first write error.
+type tableWriter struct {
+	w   *tabwriter.Writer
+	err error
+}
+
+func newTableWriter(out io.Writer) *tableWriter {
+	return &tableWriter{w: tabwriter.NewWriter(out, 0, 4, 2, ' ', 0)}
+}
+
+func (tw *tableWriter) fprintf(format string, a ...any) {
+	if tw.err != nil {
+		return
+	}
+	_, tw.err = fmt.Fprintf(tw.w, format, a...)
+}
+
+func (tw *tableWriter) fprintln(a ...any) {
+	if tw.err != nil {
+		return
+	}
+	_, tw.err = fmt.Fprintln(tw.w, a...)
+}
+
+func (tw *tableWriter) fprint(a ...any) {
+	if tw.err != nil {
+		return
+	}
+	_, tw.err = fmt.Fprint(tw.w, a...)
+}
+
+func (tw *tableWriter) flush() error {
+	if tw.err != nil {
+		return tw.err
+	}
+	return tw.w.Flush()
+}
+
+// getClientsFn builds k8s clients from configFlags.
+var getClientsFn = func(configFlags *genericclioptions.ConfigFlags) (*k8s.Clients, error) {
 	config, err := configFlags.ToRESTConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get REST config: %w", err)
@@ -27,8 +66,8 @@ func getClients(configFlags *genericclioptions.ConfigFlags) (*k8s.Clients, error
 	return clients, nil
 }
 
-// getNamespace resolves the active namespace from configFlags.
-func getNamespace(configFlags *genericclioptions.ConfigFlags) (string, error) {
+// getNamespaceFn resolves the active namespace from configFlags.
+var getNamespaceFn = func(configFlags *genericclioptions.ConfigFlags) (string, error) {
 	namespace, _, err := configFlags.ToRawKubeConfigLoader().Namespace()
 	if err != nil {
 		return "", fmt.Errorf("failed to get namespace: %w", err)
@@ -64,12 +103,12 @@ func getESReadyStatus(conditions []esv1beta1.ExternalSecretStatusCondition) stri
 }
 
 // printConditionsTable prints a SecretStore conditions table.
-func printConditionsTable(w io.Writer, conditions []esv1beta1.SecretStoreStatusCondition) {
-	fmt.Fprintln(w, "\nConditions:")
-	fmt.Fprintf(w, "  TYPE\tSTATUS\tREASON\tMESSAGE\tLAST TRANSITION\n")
+func printConditionsTable(tw *tableWriter, conditions []esv1beta1.SecretStoreStatusCondition) {
+	tw.fprintln("\nConditions:")
+	tw.fprintf("  TYPE\tSTATUS\tREASON\tMESSAGE\tLAST TRANSITION\n")
 
 	for _, c := range conditions {
-		fmt.Fprintf(w, "  %s\t%s\t%s\t%s\t%s\n",
+		tw.fprintf("  %s\t%s\t%s\t%s\t%s\n",
 			c.Type, c.Status, c.Reason, c.Message, c.LastTransitionTime.Time)
 	}
 }
@@ -101,9 +140,9 @@ func printJSON(out io.Writer, obj interface{}) error {
 		return err
 	}
 
-	fmt.Fprintln(out, string(data))
+	_, err = fmt.Fprintln(out, string(data))
 
-	return nil
+	return err
 }
 
 // printYAML writes the object as YAML.
@@ -113,7 +152,7 @@ func printYAML(out io.Writer, obj interface{}) error {
 		return err
 	}
 
-	fmt.Fprint(out, string(data))
+	_, err = fmt.Fprint(out, string(data))
 
-	return nil
+	return err
 }

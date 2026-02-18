@@ -27,12 +27,12 @@ func NewSyncCmd(streams genericclioptions.IOStreams, configFlags *genericcliopti
 }
 
 func runSync(cmd *cobra.Command, streams genericclioptions.IOStreams, configFlags *genericclioptions.ConfigFlags, name string) error {
-	clients, err := getClients(configFlags)
+	clients, err := getClientsFn(configFlags)
 	if err != nil {
 		return err
 	}
 
-	namespace, err := getNamespace(configFlags)
+	namespace, err := getNamespaceFn(configFlags)
 	if err != nil {
 		return err
 	}
@@ -52,6 +52,6 @@ func runSync(cmd *cobra.Command, streams genericclioptions.IOStreams, configFlag
 		return fmt.Errorf("failed to update ExternalSecret %q: %w", name, err)
 	}
 
-	fmt.Fprintf(streams.Out, "externalsecret/%s sync triggered\n", name)
-	return nil
+	_, err = fmt.Fprintf(streams.Out, "externalsecret/%s sync triggered\n", name)
+	return err
 }
