@@ -1,7 +1,7 @@
 # Binaries
 bin/
-kubectl-eso
-kubectl_complete-eso
+./kubectl-eso
+./kubectl_complete-eso
 *.exe
 *.exe~
 *.dll
