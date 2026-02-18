@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"text/tabwriter"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
 	"github.com/spf13/cobra"
@@ -33,12 +32,12 @@ func runGetExternalSecret(cmd *cobra.Command, streams genericclioptions.IOStream
 	output, _ := cmd.Flags().GetString("output")
 	noHeaders, _ := cmd.Flags().GetBool("no-headers")
 
-	clients, err := getClients(configFlags)
+	clients, err := getClientsFn(configFlags)
 	if err != nil {
 		return err
 	}
 
-	namespace, err := getNamespace(configFlags)
+	namespace, err := getNamespaceFn(configFlags)
 	if err != nil {
 		return err
 	}
@@ -64,19 +63,18 @@ func runGetExternalSecret(cmd *cobra.Command, streams genericclioptions.IOStream
 }
 
 func printExternalSecretTable(out io.Writer, items []esv1beta1.ExternalSecret, allNamespaces bool, noHeaders bool) error {
-	w := tabwriter.NewWriter(out, 0, 4, 2, ' ', 0)
-	defer w.Flush()
+	tw := newTableWriter(out)
 
 	if !noHeaders {
 		if allNamespaces {
-			fmt.Fprint(w, "NAMESPACE\t")
+			tw.fprint("NAMESPACE\t")
 		}
-		fmt.Fprintln(w, "NAME\tSTORE\tREFRESH INTERVAL\tREADY\tAGE")
+		tw.fprintln("NAME\tSTORE\tREFRESH INTERVAL\tREADY\tAGE")
 	}
 
 	for _, es := range items {
 		if allNamespaces {
-			fmt.Fprintf(w, "%s\t", es.Namespace)
+			tw.fprintf("%s\t", es.Namespace)
 		}
 
 		store := ""
@@ -92,8 +90,8 @@ func printExternalSecretTable(out io.Writer, items []esv1beta1.ExternalSecret, a
 		ready := getESReadyStatus(es.Status.Conditions)
 		age := formatAge(es.CreationTimestamp.Time)
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", es.Name, store, refreshInterval, ready, age)
+		tw.fprintf("%s\t%s\t%s\t%s\t%s\n", es.Name, store, refreshInterval, ready, age)
 	}
 
-	return nil
+	return tw.flush()
 }

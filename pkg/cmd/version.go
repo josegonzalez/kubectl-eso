@@ -21,8 +21,8 @@ func NewVersionCmd(streams genericclioptions.IOStreams) *cobra.Command {
 		Short: "Print version information",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprintf(streams.Out, "kubectl-eso version %s (commit: %s, built: %s)\n", Version, Commit, Date)
-			return nil
+			_, err := fmt.Fprintf(streams.Out, "kubectl-eso version %s (commit: %s, built: %s)\n", Version, Commit, Date)
+			return err
 		},
 	}
 }

@@ -35,12 +35,12 @@ func runAnnotate(cmd *cobra.Command, streams genericclioptions.IOStreams, config
 	store, _ := cmd.Flags().GetString("store")
 	storeKind, _ := cmd.Flags().GetString("store-kind")
 
-	clients, err := getClients(configFlags)
+	clients, err := getClientsFn(configFlags)
 	if err != nil {
 		return err
 	}
 
-	namespace, err := getNamespace(configFlags)
+	namespace, err := getNamespaceFn(configFlags)
 	if err != nil {
 		return err
 	}
@@ -84,6 +84,6 @@ func runAnnotate(cmd *cobra.Command, streams genericclioptions.IOStreams, config
 		return fmt.Errorf("failed to update Secret %q: %w", name, err)
 	}
 
-	fmt.Fprintf(streams.Out, "secret/%s annotated for ESO adoption\n", name)
-	return nil
+	_, err = fmt.Fprintf(streams.Out, "secret/%s annotated for ESO adoption\n", name)
+	return err
 }

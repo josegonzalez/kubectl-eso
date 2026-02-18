@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"text/tabwriter"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
 	"github.com/spf13/cobra"
@@ -28,12 +27,12 @@ func NewDescribeExternalSecretCmd(streams genericclioptions.IOStreams, configFla
 func runDescribeExternalSecret(cmd *cobra.Command, streams genericclioptions.IOStreams, configFlags *genericclioptions.ConfigFlags, name string) error {
 	output, _ := cmd.Flags().GetString("output")
 
-	clients, err := getClients(configFlags)
+	clients, err := getClientsFn(configFlags)
 	if err != nil {
 		return err
 	}
 
-	namespace, err := getNamespace(configFlags)
+	namespace, err := getNamespaceFn(configFlags)
 	if err != nil {
 		return err
 	}
@@ -54,46 +53,45 @@ func runDescribeExternalSecret(cmd *cobra.Command, streams genericclioptions.IOS
 }
 
 func printExternalSecretDetail(out io.Writer, es esv1beta1.ExternalSecret) error {
-	w := tabwriter.NewWriter(out, 0, 4, 2, ' ', 0)
-	defer w.Flush()
+	tw := newTableWriter(out)
 
-	fmt.Fprintf(w, "Name:\t%s\n", es.Name)
-	fmt.Fprintf(w, "Namespace:\t%s\n", es.Namespace)
+	tw.fprintf("Name:\t%s\n", es.Name)
+	tw.fprintf("Namespace:\t%s\n", es.Namespace)
 
 	// Store ref
-	fmt.Fprintf(w, "Store:\t%s\n", es.Spec.SecretStoreRef.Name)
+	tw.fprintf("Store:\t%s\n", es.Spec.SecretStoreRef.Name)
 	if es.Spec.SecretStoreRef.Kind != "" {
-		fmt.Fprintf(w, "Store Kind:\t%s\n", es.Spec.SecretStoreRef.Kind)
+		tw.fprintf("Store Kind:\t%s\n", es.Spec.SecretStoreRef.Kind)
 	}
 
 	// Target
 	if es.Spec.Target.Name != "" {
-		fmt.Fprintf(w, "Target Secret:\t%s\n", es.Spec.Target.Name)
+		tw.fprintf("Target Secret:\t%s\n", es.Spec.Target.Name)
 	} else {
-		fmt.Fprintf(w, "Target Secret:\t%s\n", es.Name)
+		tw.fprintf("Target Secret:\t%s\n", es.Name)
 	}
 
 	// Refresh interval
 	if es.Spec.RefreshInterval != nil {
-		fmt.Fprintf(w, "Refresh Interval:\t%s\n", es.Spec.RefreshInterval.Duration)
+		tw.fprintf("Refresh Interval:\t%s\n", es.Spec.RefreshInterval.Duration)
 	}
 
 	// Creation policy
 	if es.Spec.Target.CreationPolicy != "" {
-		fmt.Fprintf(w, "Creation Policy:\t%s\n", es.Spec.Target.CreationPolicy)
+		tw.fprintf("Creation Policy:\t%s\n", es.Spec.Target.CreationPolicy)
 	}
 
 	// Status
-	fmt.Fprintln(w, "\nConditions:")
-	fmt.Fprintf(w, "  TYPE\tSTATUS\tREASON\tMESSAGE\tLAST TRANSITION\n")
+	tw.fprintln("\nConditions:")
+	tw.fprintf("  TYPE\tSTATUS\tREASON\tMESSAGE\tLAST TRANSITION\n")
 	for _, c := range es.Status.Conditions {
-		fmt.Fprintf(w, "  %s\t%s\t%s\t%s\t%s\n",
+		tw.fprintf("  %s\t%s\t%s\t%s\t%s\n",
 			c.Type, c.Status, c.Reason, c.Message, c.LastTransitionTime.Time)
 	}
 
 	if es.Status.SyncedResourceVersion != "" {
-		fmt.Fprintf(w, "\nSynced Resource Version:\t%s\n", es.Status.SyncedResourceVersion)
+		tw.fprintf("\nSynced Resource Version:\t%s\n", es.Status.SyncedResourceVersion)
 	}
 
-	return nil
+	return tw.flush()
 }

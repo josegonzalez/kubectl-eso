@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"text/tabwriter"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
 	"github.com/spf13/cobra"
@@ -49,7 +48,7 @@ func runGetStoreVariant(cmd *cobra.Command, streams genericclioptions.IOStreams,
 	output, _ := cmd.Flags().GetString("output")
 	noHeaders, _ := cmd.Flags().GetBool("no-headers")
 
-	clients, err := getClients(configFlags)
+	clients, err := getClientsFn(configFlags)
 	if err != nil {
 		return err
 	}
@@ -82,7 +81,7 @@ func runGetStoreVariant(cmd *cobra.Command, streams genericclioptions.IOStreams,
 
 	allNamespaces, _ := cmd.Flags().GetBool("all-namespaces")
 
-	namespace, err := getNamespace(configFlags)
+	namespace, err := getNamespaceFn(configFlags)
 	if err != nil {
 		return err
 	}
@@ -119,25 +118,24 @@ func runGetStoreVariant(cmd *cobra.Command, streams genericclioptions.IOStreams,
 }
 
 func printStoreTable(out io.Writer, items []storeItem, allNamespaces bool, noHeaders bool) error {
-	w := tabwriter.NewWriter(out, 0, 4, 2, ' ', 0)
-	defer w.Flush()
+	tw := newTableWriter(out)
 
 	if !noHeaders {
 		if allNamespaces {
-			fmt.Fprint(w, "NAMESPACE\t")
+			tw.fprint("NAMESPACE\t")
 		}
-		fmt.Fprintln(w, "NAME\tREADY\tPROVIDER\tAGE")
+		tw.fprintln("NAME\tREADY\tPROVIDER\tAGE")
 	}
 
 	for _, item := range items {
 		if allNamespaces {
-			fmt.Fprintf(w, "%s\t", item.Namespace)
+			tw.fprintf("%s\t", item.Namespace)
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", item.Name, item.Ready, item.Provider, item.Age)
+		tw.fprintf("%s\t%s\t%s\t%s\n", item.Name, item.Ready, item.Provider, item.Age)
 	}
 
-	return nil
+	return tw.flush()
 }
 
 func getProviderName(provider *esv1beta1.SecretStoreProvider) string {
