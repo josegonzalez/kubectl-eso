@@ -1,40 +1,114 @@
 # kubectl-eso
 
-A kubectl plugin for managing Kubernetes Secrets in the context of the [External Secrets Operator](https://external-secrets.io).
-
-## Features
-
-- Annotate existing Secrets for ESO adoption (`creationPolicy: Merge`)
-- List and inspect ExternalSecrets, SecretStores, and ClusterSecretStores
-- View Secret data with optional base64 decoding
-- Force re-sync ExternalSecrets
-- Helm release secrets are automatically filtered out
-- Full kubectl flag compatibility (`--namespace`, `--context`, `--kubeconfig`, etc.)
-- Shell completion for bash, zsh, fish, and powershell
+A kubectl plugin for managing Kubernetes Secrets in the context of
+the [External Secrets Operator](https://external-secrets.io).
+It supports annotating existing Secrets for ESO adoption,
+listing and inspecting ExternalSecrets, SecretStores, and
+ClusterSecretStores, viewing Secret data with optional base64
+decoding, forcing re-sync of ExternalSecrets, and shell completion
+for bash, zsh, fish, and powershell. Helm release secrets are
+automatically filtered out, and all standard kubectl flags
+are supported.
 
 ## Installation
-
-### From source
 
 ```bash
 go install github.com/josegonzalez/kubectl-eso/cmd/kubectl-eso@latest
 ```
 
-### From release
+Download pre-built binaries from the [releases page](https://github.com/josegonzalez/kubectl-eso/releases).
 
-Download the binary from the [releases page](https://github.com/josegonzalez/kubectl-eso/releases) and place it in your `$PATH`.
-
-### With make
+## Building from Source
 
 ```bash
-git clone https://github.com/josegonzalez/kubectl-eso.git
-cd kubectl-eso
+# Build
+make build
+
+# Run tests
+make test
+
+# Lint
+make lint
+
+# Install kubectl-eso and kubectl_complete-eso to $GOPATH/bin
 make install
 ```
 
-This installs both `kubectl-eso` and the `kubectl_complete-eso` completion wrapper to `$GOPATH/bin`.
+The `make install` target also installs the
+`kubectl_complete-eso` completion wrapper for kubectl plugin
+completion (kubectl v1.26+).
 
 ## Usage
+
+```text
+kubectl eso COMMAND [SUBCOMMAND] [ARGS...] [FLAGS...]
+```
+
+| Command | Description |
+| ------- | ----------- |
+| `annotate` | Annotate an existing Secret for ESO adoption |
+| `get` | List resources (ExternalSecrets, Secrets, stores) |
+| `describe` | Show detailed info for a resource |
+| `sync` | Force re-sync an ExternalSecret |
+| `completion` | Generate shell completion scripts |
+| `version` | Print version information |
+
+### Global Flags
+
+All standard kubectl flags are supported:
+
+| Flag | Short | Description |
+| ---- | ----- | ----------- |
+| `--kubeconfig` | | Path to kubeconfig file |
+| `--context` | | Kubeconfig context to use |
+| `--namespace` | `-n` | Target namespace |
+| `--cluster` | | Kubeconfig cluster to use |
+| `--user` | | Kubeconfig user to use |
+| `--server` | `-s` | Kubernetes API server address |
+| `--token` | | Bearer token for authentication |
+| `--as` | | Username to impersonate |
+| `--as-group` | | Group to impersonate |
+| `--as-uid` | | UID to impersonate |
+| `--certificate-authority` | | CA cert file |
+| `--client-certificate` | | TLS client cert file |
+| `--client-key` | | TLS client key file |
+| `--insecure-skip-tls-verify` | | Skip server cert verification |
+| `--tls-server-name` | | Server name for TLS cert validation |
+| `--request-timeout` | | Request timeout duration |
+| `--cache-dir` | | HTTP cache directory |
+
+Additional flags:
+
+| Flag | Short | Description | Default |
+| ---- | ----- | ----------- | ------- |
+| `--output` | `-o` | Output format (`table`, `json`, `yaml`) | `table` |
+| `--no-headers` | | Omit table header row | `false` |
+
+## Commands
+
+### `kubectl eso annotate SECRET [flags]`
+
+Annotates an existing Kubernetes Secret for ESO adoption.
+Adds labels and annotations so a future ExternalSecret with
+`creationPolicy: Merge` can adopt the Secret.
+
+**Labels/annotations applied:**
+
+- Label: `reconcile.external-secrets.io/managed: "true"`
+- Annotation: `kubectl-eso.io/imported: "true"`
+- Annotation: `kubectl-eso.io/imported-at: <RFC3339 timestamp>`
+- Annotation: `kubectl-eso.io/store: <name>` (if `--store` provided)
+- Annotation: `kubectl-eso.io/store-kind: <kind>` (if `--store` provided)
+
+**Flags:**
+
+| Flag | Description | Default |
+| ---- | ----------- | ------- |
+| `--dry-run` | Output annotated Secret as YAML without applying | `false` |
+| `--store` | Name of the SecretStore or ClusterSecretStore | |
+| `--store-kind` | Kind of the store | `SecretStore` |
+
+**Examples:**
 
 ```bash
 # Annotate a secret for ESO adoption
@@ -42,52 +116,147 @@ kubectl eso annotate my-secret --store my-store
 
 # Annotate with dry-run (outputs YAML)
 kubectl eso annotate my-secret --store my-store --dry-run
+```
 
+### `kubectl eso get external-secret [flags]`
+
+Lists ExternalSecrets with target Secret, store ref,
+refresh interval, and ready status.
+
+**Examples:**
+
+```bash
 # List ExternalSecrets
 kubectl eso get external-secret
 kubectl eso get es                    # short alias
 kubectl eso get external-secrets -A   # all namespaces
 
+# Output as JSON
+kubectl eso get external-secret -o json
+```
+
+### `kubectl eso get secret [flags]`
+
+Lists Secrets (excluding Helm release secrets) with an ESO-managed indicator.
+
+**Table columns:** NAME, NAMESPACE (if `-A`), TYPE, ESO-MANAGED, STORE, AGE
+
+**Examples:**
+
+```bash
 # List Secrets with ESO-managed indicator
 kubectl eso get secret
 
+# All namespaces
+kubectl eso get secret -A
+```
+
+### `kubectl eso get secret-store [flags]`
+
+Lists SecretStores with health status, provider type, and age.
+
+**Examples:**
+
+```bash
 # List SecretStores
 kubectl eso get secret-store
-kubectl eso get ss                    # short alias
+kubectl eso get ss    # short alias
+```
 
+### `kubectl eso get cluster-secret-store [flags]`
+
+Lists ClusterSecretStores with health status, provider type, and age.
+
+**Examples:**
+
+```bash
 # List ClusterSecretStores
 kubectl eso get cluster-secret-store
-kubectl eso get css                   # short alias
+kubectl eso get css    # short alias
+```
 
+### `kubectl eso describe external-secret NAME [flags]`
+
+Shows detailed sync status including conditions, target
+secret, store ref, refresh interval, and last sync time.
+
+**Examples:**
+
+```bash
 # Describe an ExternalSecret
 kubectl eso describe external-secret my-es
 
+# Output as YAML
+kubectl eso describe external-secret my-es -o yaml
+```
+
+### `kubectl eso describe secret NAME [flags]`
+
+Views Secret data. Base64-encoded by default, decoded with
+`--decode`/`-d`. Shows a warning if the Secret is not
+ESO-managed. Errors if the Secret is a Helm release secret.
+
+**Flags:**
+
+| Flag | Short | Description | Default |
+| ---- | ----- | ----------- | ------- |
+| `--decode` | `-d` | Decode base64 Secret data | `false` |
+
+**Examples:**
+
+```bash
 # View Secret data (base64 encoded)
 kubectl eso describe secret my-secret
 
 # View Secret data (decoded)
 kubectl eso describe secret my-secret --decode
 
-# Describe a SecretStore
-kubectl eso describe secret-store my-store
-
-# Describe a ClusterSecretStore
-kubectl eso describe cluster-secret-store my-css
-
-# Force re-sync an ExternalSecret
-kubectl eso sync my-es
-
-# Output as JSON or YAML
-kubectl eso get external-secret -o json
+# Output as YAML
 kubectl eso describe secret my-secret -o yaml
-
-# Print version
-kubectl eso version
 ```
 
-## Shell Completion
+### `kubectl eso describe secret-store NAME [flags]`
 
-Generate completion scripts:
+Shows SecretStore health details including conditions,
+provider type, and last transition time.
+
+**Examples:**
+
+```bash
+# Describe a SecretStore
+kubectl eso describe secret-store my-store
+```
+
+### `kubectl eso describe cluster-secret-store NAME [flags]`
+
+Shows ClusterSecretStore health details including conditions,
+provider type, and last transition time.
+
+**Examples:**
+
+```bash
+# Describe a ClusterSecretStore
+kubectl eso describe cluster-secret-store my-css
+```
+
+### `kubectl eso sync NAME`
+
+Forces re-sync of an ExternalSecret by setting a
+`kubectl-eso.io/force-sync` annotation with the current
+unix timestamp.
+
+**Examples:**
+
+```bash
+# Force re-sync an ExternalSecret
+kubectl eso sync my-es
+```
+
+### `kubectl eso completion SHELL`
+
+Generates shell completion scripts.
+
+**Examples:**
 
 ```bash
 # bash
@@ -101,16 +270,50 @@ kubectl eso completion zsh > "${fpath[1]}/_kubectl-eso"
 kubectl eso completion fish > ~/.config/fish/completions/kubectl-eso.fish
 ```
 
-For kubectl plugin completion (kubectl v1.26+), ensure `kubectl_complete-eso` is in your `$PATH`. The `make install` target handles this automatically.
+For kubectl plugin completion (kubectl v1.26+), ensure
+`kubectl_complete-eso` is in your `$PATH`. The `make install`
+target handles this automatically.
+
+### `kubectl eso version`
+
+Prints version, commit, and build date.
+
+**Examples:**
+
+```bash
+kubectl eso version
+```
 
 ## Resource Aliases
 
 | Command | Aliases |
-|---------|---------|
-| `external-secret` | `external-secrets`, `es`, `ExternalSecret`, `ExternalSecrets` |
-| `secret` | `secrets`, `Secret`, `Secrets` |
-| `secret-store` | `secret-stores`, `ss`, `SecretStore`, `SecretStores` |
-| `cluster-secret-store` | `cluster-secret-stores`, `css`, `ClusterSecretStore`, `ClusterSecretStores` |
+| ------- | ------- |
+| `external-secret` | `es`, `external-secrets` |
+| `secret` | `secrets` |
+| `secret-store` | `ss`, `secret-stores` |
+| `cluster-secret-store` | `css`, `cluster-secret-stores` |
+
+## Helm Secret Filtering
+
+Secrets with type `helm.sh/release.v1` are automatically excluded:
+
+- `get secret` silently filters them from the listing
+- `describe secret` returns an error
+
+## RBAC Requirements
+
+| Subcommand | Resource | Verbs |
+| ---------- | -------- | ----- |
+| `annotate` | `secrets` | `get`, `update` |
+| `get secret` | `secrets` | `list` |
+| `describe secret` | `secrets` | `get` |
+| `get external-secret` | `externalsecrets` | `list` |
+| `describe external-secret` | `externalsecrets` | `get` |
+| `sync` | `externalsecrets` | `get`, `update` |
+| `get secret-store` | `secretstores` | `list` |
+| `describe secret-store` | `secretstores` | `get` |
+| `get cluster-secret-store` | `clustersecretstores` | `list` |
+| `describe cluster-secret-store` | `clustersecretstores` | `get` |
 
 ## License
 
