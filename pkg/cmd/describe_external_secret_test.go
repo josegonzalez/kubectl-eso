@@ -5,39 +5,56 @@ import (
 	"strings"
 	"testing"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
+
+func TestDescribeExternalSecretNoArgs(t *testing.T) {
+	var buf bytes.Buffer
+	streams := genericclioptions.IOStreams{Out: &buf, ErrOut: &buf}
+	configFlags := genericclioptions.NewConfigFlags(true)
+	cmd := NewDescribeExternalSecretCmd(streams, configFlags)
+	cmd.SetArgs([]string{})
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for no args, got nil")
+	}
+	if !strings.Contains(err.Error(), "ExternalSecret") {
+		t.Errorf("error should contain resource type, got: %v", err)
+	}
+}
 
 func TestPrintExternalSecretDetail(t *testing.T) {
 	tests := []struct {
 		name         string
-		es           esv1beta1.ExternalSecret
+		es           esv1.ExternalSecret
 		wantContains []string
 	}{
 		{
 			name: "basic detail",
-			es: esv1beta1.ExternalSecret{
+			es: esv1.ExternalSecret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-es",
 					Namespace: "default",
 				},
-				Spec: esv1beta1.ExternalSecretSpec{
-					SecretStoreRef: esv1beta1.SecretStoreRef{
+				Spec: esv1.ExternalSecretSpec{
+					SecretStoreRef: esv1.SecretStoreRef{
 						Name: "my-store",
 						Kind: "SecretStore",
 					},
 					RefreshInterval: &metav1.Duration{Duration: 3600000000000},
-					Target: esv1beta1.ExternalSecretTarget{
+					Target: esv1.ExternalSecretTarget{
 						Name:           "target-secret",
-						CreationPolicy: esv1beta1.CreatePolicyMerge,
+						CreationPolicy: esv1.CreatePolicyMerge,
 					},
 				},
-				Status: esv1beta1.ExternalSecretStatus{
-					Conditions: []esv1beta1.ExternalSecretStatusCondition{
+				Status: esv1.ExternalSecretStatus{
+					Conditions: []esv1.ExternalSecretStatusCondition{
 						{
-							Type:    esv1beta1.ExternalSecretReady,
+							Type:    esv1.ExternalSecretReady,
 							Status:  corev1.ConditionTrue,
 							Reason:  "SecretSynced",
 							Message: "Secret was synced",
@@ -61,13 +78,13 @@ func TestPrintExternalSecretDetail(t *testing.T) {
 		},
 		{
 			name: "no target name uses es name",
-			es: esv1beta1.ExternalSecret{
+			es: esv1.ExternalSecret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-es",
 					Namespace: "default",
 				},
-				Spec: esv1beta1.ExternalSecretSpec{
-					SecretStoreRef: esv1beta1.SecretStoreRef{Name: "store"},
+				Spec: esv1.ExternalSecretSpec{
+					SecretStoreRef: esv1.SecretStoreRef{Name: "store"},
 				},
 			},
 			wantContains: []string{"Target Secret:", "my-es"},

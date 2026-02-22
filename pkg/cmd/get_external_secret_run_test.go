@@ -6,21 +6,21 @@ import (
 	"testing"
 	"time"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func TestRunGetExternalSecret(t *testing.T) {
-	es := &esv1beta1.ExternalSecret{
+	es := &esv1.ExternalSecret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "my-es",
 			Namespace:         "default",
 			CreationTimestamp: metav1.NewTime(time.Now().Add(-1 * time.Hour)),
 		},
-		Spec: esv1beta1.ExternalSecretSpec{
-			SecretStoreRef:  esv1beta1.SecretStoreRef{Name: "my-store"},
+		Spec: esv1.ExternalSecretSpec{
+			SecretStoreRef:  esv1.SecretStoreRef{Name: "my-store"},
 			RefreshInterval: &metav1.Duration{Duration: 1 * time.Hour},
 		},
 	}
@@ -73,14 +73,14 @@ func TestRunGetExternalSecret(t *testing.T) {
 }
 
 func TestRunGetExternalSecretAllNamespaces(t *testing.T) {
-	es := &esv1beta1.ExternalSecret{
+	es := &esv1.ExternalSecret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "my-es",
 			Namespace:         "production",
 			CreationTimestamp: metav1.NewTime(time.Now()),
 		},
-		Spec: esv1beta1.ExternalSecretSpec{
-			SecretStoreRef: esv1beta1.SecretStoreRef{Name: "store"},
+		Spec: esv1.ExternalSecretSpec{
+			SecretStoreRef: esv1.SecretStoreRef{Name: "store"},
 		},
 	}
 

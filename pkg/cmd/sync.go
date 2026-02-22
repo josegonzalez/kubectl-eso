@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	"github.com/josegonzalez/kubectl-eso/pkg/eso"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -37,7 +37,7 @@ func runSync(cmd *cobra.Command, streams genericclioptions.IOStreams, configFlag
 		return err
 	}
 
-	var es esv1beta1.ExternalSecret
+	var es esv1.ExternalSecret
 	key := client.ObjectKey{Namespace: namespace, Name: name}
 	if err := clients.CRClient.Get(context.TODO(), key, &es); err != nil {
 		return fmt.Errorf("failed to get ExternalSecret %q: %w", name, err)

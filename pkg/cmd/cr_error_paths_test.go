@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -88,13 +88,13 @@ func TestRunGetClusterSecretStoreListError(t *testing.T) {
 }
 
 func TestRunSyncUpdateError(t *testing.T) {
-	es := &esv1beta1.ExternalSecret{
+	es := &esv1.ExternalSecret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-es",
 			Namespace: "default",
 		},
-		Spec: esv1beta1.ExternalSecretSpec{
-			SecretStoreRef: esv1beta1.SecretStoreRef{Name: "store"},
+		Spec: esv1.ExternalSecretSpec{
+			SecretStoreRef: esv1.SecretStoreRef{Name: "store"},
 		},
 	}
 
@@ -120,13 +120,13 @@ func TestRunSyncUpdateError(t *testing.T) {
 }
 
 func TestRunGetExternalSecretNoHeaders(t *testing.T) {
-	es := &esv1beta1.ExternalSecret{
+	es := &esv1.ExternalSecret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-es",
 			Namespace: "default",
 		},
-		Spec: esv1beta1.ExternalSecretSpec{
-			SecretStoreRef: esv1beta1.SecretStoreRef{Name: "store"},
+		Spec: esv1.ExternalSecretSpec{
+			SecretStoreRef: esv1.SecretStoreRef{Name: "store"},
 		},
 	}
 
@@ -240,14 +240,14 @@ func TestRunAnnotateUpdateError(t *testing.T) {
 }
 
 func TestRunGetSecretStoreNoHeaders(t *testing.T) {
-	ss := &esv1beta1.SecretStore{
+	ss := &esv1.SecretStore{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-store",
 			Namespace: "default",
 		},
-		Spec: esv1beta1.SecretStoreSpec{
-			Provider: &esv1beta1.SecretStoreProvider{
-				AWS: &esv1beta1.AWSProvider{},
+		Spec: esv1.SecretStoreSpec{
+			Provider: &esv1.SecretStoreProvider{
+				AWS: &esv1.AWSProvider{},
 			},
 		},
 	}

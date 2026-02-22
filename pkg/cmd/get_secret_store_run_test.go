@@ -6,22 +6,22 @@ import (
 	"testing"
 	"time"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func TestRunGetSecretStore(t *testing.T) {
-	ss := &esv1beta1.SecretStore{
+	ss := &esv1.SecretStore{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "my-store",
 			Namespace:         "default",
 			CreationTimestamp: metav1.NewTime(time.Now()),
 		},
-		Spec: esv1beta1.SecretStoreSpec{
-			Provider: &esv1beta1.SecretStoreProvider{
-				AWS: &esv1beta1.AWSProvider{},
+		Spec: esv1.SecretStoreSpec{
+			Provider: &esv1.SecretStoreProvider{
+				AWS: &esv1.AWSProvider{},
 			},
 		},
 	}
@@ -74,15 +74,15 @@ func TestRunGetSecretStore(t *testing.T) {
 }
 
 func TestRunGetSecretStoreAllNamespaces(t *testing.T) {
-	ss := &esv1beta1.SecretStore{
+	ss := &esv1.SecretStore{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "my-store",
 			Namespace:         "production",
 			CreationTimestamp: metav1.NewTime(time.Now()),
 		},
-		Spec: esv1beta1.SecretStoreSpec{
-			Provider: &esv1beta1.SecretStoreProvider{
-				AWS: &esv1beta1.AWSProvider{},
+		Spec: esv1.SecretStoreSpec{
+			Provider: &esv1.SecretStoreProvider{
+				AWS: &esv1.AWSProvider{},
 			},
 		},
 	}
@@ -110,14 +110,14 @@ func TestRunGetSecretStoreAllNamespaces(t *testing.T) {
 }
 
 func TestRunGetClusterSecretStore(t *testing.T) {
-	css := &esv1beta1.ClusterSecretStore{
+	css := &esv1.ClusterSecretStore{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "global-store",
 			CreationTimestamp: metav1.NewTime(time.Now()),
 		},
-		Spec: esv1beta1.SecretStoreSpec{
-			Provider: &esv1beta1.SecretStoreProvider{
-				Vault: &esv1beta1.VaultProvider{},
+		Spec: esv1.SecretStoreSpec{
+			Provider: &esv1.SecretStoreProvider{
+				Vault: &esv1.VaultProvider{},
 			},
 		},
 	}

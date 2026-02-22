@@ -5,24 +5,24 @@ import (
 	"strings"
 	"testing"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func TestRunDescribeExternalSecret(t *testing.T) {
-	es := &esv1beta1.ExternalSecret{
+	es := &esv1.ExternalSecret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-es",
 			Namespace: "default",
 		},
-		Spec: esv1beta1.ExternalSecretSpec{
-			SecretStoreRef: esv1beta1.SecretStoreRef{
+		Spec: esv1.ExternalSecretSpec{
+			SecretStoreRef: esv1.SecretStoreRef{
 				Name: "my-store",
 				Kind: "SecretStore",
 			},
-			Target: esv1beta1.ExternalSecretTarget{
+			Target: esv1.ExternalSecretTarget{
 				Name: "target-secret",
 			},
 		},

@@ -3,7 +3,7 @@ package k8s
 import (
 	"testing"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/rest"
 )
@@ -20,13 +20,13 @@ func TestNewScheme(t *testing.T) {
 	}
 
 	// Verify ESO types are registered
-	if !scheme.Recognizes(esv1beta1.SchemeGroupVersion.WithKind("ExternalSecret")) {
+	if !scheme.Recognizes(esv1.SchemeGroupVersion.WithKind("ExternalSecret")) {
 		t.Error("scheme does not recognize ExternalSecret")
 	}
-	if !scheme.Recognizes(esv1beta1.SchemeGroupVersion.WithKind("SecretStore")) {
+	if !scheme.Recognizes(esv1.SchemeGroupVersion.WithKind("SecretStore")) {
 		t.Error("scheme does not recognize SecretStore")
 	}
-	if !scheme.Recognizes(esv1beta1.SchemeGroupVersion.WithKind("ClusterSecretStore")) {
+	if !scheme.Recognizes(esv1.SchemeGroupVersion.WithKind("ClusterSecretStore")) {
 		t.Error("scheme does not recognize ClusterSecretStore")
 	}
 }

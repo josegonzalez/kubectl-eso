@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -17,7 +17,7 @@ func NewDescribeSecretStoreCmd(streams genericclioptions.IOStreams, configFlags 
 		Use:     "secret-store <name>",
 		Short:   "Show details of a SecretStore",
 		Aliases: []string{"secret-stores", "secretstores.external-secrets.io"},
-		Args:    cobra.ExactArgs(1),
+		Args:    requireNameArg("SecretStore"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDescribeStoreVariant(cmd, streams, configFlags, args[0], false)
 		},
@@ -30,7 +30,7 @@ func NewDescribeClusterSecretStoreCmd(streams genericclioptions.IOStreams, confi
 		Use:     "cluster-secret-store <name>",
 		Short:   "Show details of a ClusterSecretStore",
 		Aliases: []string{"cluster-secret-stores", "clustersecretstores.external-secrets.io"},
-		Args:    cobra.ExactArgs(1),
+		Args:    requireNameArg("ClusterSecretStore"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDescribeStoreVariant(cmd, streams, configFlags, args[0], true)
 		},
@@ -46,7 +46,7 @@ func runDescribeStoreVariant(cmd *cobra.Command, streams genericclioptions.IOStr
 	}
 
 	if clusterScoped {
-		var css esv1beta1.ClusterSecretStore
+		var css esv1.ClusterSecretStore
 		if err := clients.CRClient.Get(context.TODO(), client.ObjectKey{Name: name}, &css); err != nil {
 			return fmt.Errorf("failed to get ClusterSecretStore %q: %w", name, err)
 		}
@@ -66,7 +66,7 @@ func runDescribeStoreVariant(cmd *cobra.Command, streams genericclioptions.IOStr
 		return err
 	}
 
-	var ss esv1beta1.SecretStore
+	var ss esv1.SecretStore
 	if err := clients.CRClient.Get(context.TODO(), client.ObjectKey{Namespace: namespace, Name: name}, &ss); err != nil {
 		return fmt.Errorf("failed to get SecretStore %q: %w", name, err)
 	}
@@ -81,7 +81,7 @@ func runDescribeStoreVariant(cmd *cobra.Command, streams genericclioptions.IOStr
 	}
 }
 
-func printStoreDetail(out io.Writer, name, namespace string, provider *esv1beta1.SecretStoreProvider, conditions []esv1beta1.SecretStoreStatusCondition) error {
+func printStoreDetail(out io.Writer, name, namespace string, provider *esv1.SecretStoreProvider, conditions []esv1.SecretStoreStatusCondition) error {
 	tw := newTableWriter(out)
 
 	tw.fprintf("Name:\t%s\n", name)

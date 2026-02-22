@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -15,7 +15,7 @@ func TestPrintExternalSecretTable(t *testing.T) {
 	now := time.Now()
 	tests := []struct {
 		name          string
-		items         []esv1beta1.ExternalSecret
+		items         []esv1.ExternalSecret
 		allNamespaces bool
 		noHeaders     bool
 		wantContains  []string
@@ -39,23 +39,23 @@ func TestPrintExternalSecretTable(t *testing.T) {
 			name:          "single item",
 			allNamespaces: false,
 			noHeaders:     false,
-			items: []esv1beta1.ExternalSecret{
+			items: []esv1.ExternalSecret{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:              "my-es",
 						Namespace:         "default",
 						CreationTimestamp: metav1.NewTime(now.Add(-1 * time.Hour)),
 					},
-					Spec: esv1beta1.ExternalSecretSpec{
-						SecretStoreRef: esv1beta1.SecretStoreRef{
+					Spec: esv1.ExternalSecretSpec{
+						SecretStoreRef: esv1.SecretStoreRef{
 							Name: "my-store",
 						},
 						RefreshInterval: &metav1.Duration{Duration: 1 * time.Hour},
 					},
-					Status: esv1beta1.ExternalSecretStatus{
-						Conditions: []esv1beta1.ExternalSecretStatusCondition{
+					Status: esv1.ExternalSecretStatus{
+						Conditions: []esv1.ExternalSecretStatusCondition{
 							{
-								Type:   esv1beta1.ExternalSecretReady,
+								Type:   esv1.ExternalSecretReady,
 								Status: corev1.ConditionTrue,
 							},
 						},
@@ -68,15 +68,15 @@ func TestPrintExternalSecretTable(t *testing.T) {
 			name:          "all namespaces shows namespace column",
 			allNamespaces: true,
 			noHeaders:     false,
-			items: []esv1beta1.ExternalSecret{
+			items: []esv1.ExternalSecret{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:              "my-es",
 						Namespace:         "production",
 						CreationTimestamp: metav1.NewTime(now),
 					},
-					Spec: esv1beta1.ExternalSecretSpec{
-						SecretStoreRef: esv1beta1.SecretStoreRef{Name: "store"},
+					Spec: esv1.ExternalSecretSpec{
+						SecretStoreRef: esv1.SecretStoreRef{Name: "store"},
 					},
 				},
 			},
@@ -86,19 +86,19 @@ func TestPrintExternalSecretTable(t *testing.T) {
 			name:          "not ready condition",
 			allNamespaces: false,
 			noHeaders:     false,
-			items: []esv1beta1.ExternalSecret{
+			items: []esv1.ExternalSecret{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:              "failing-es",
 						CreationTimestamp: metav1.NewTime(now),
 					},
-					Spec: esv1beta1.ExternalSecretSpec{
-						SecretStoreRef: esv1beta1.SecretStoreRef{Name: "store"},
+					Spec: esv1.ExternalSecretSpec{
+						SecretStoreRef: esv1.SecretStoreRef{Name: "store"},
 					},
-					Status: esv1beta1.ExternalSecretStatus{
-						Conditions: []esv1beta1.ExternalSecretStatusCondition{
+					Status: esv1.ExternalSecretStatus{
+						Conditions: []esv1.ExternalSecretStatusCondition{
 							{
-								Type:   esv1beta1.ExternalSecretReady,
+								Type:   esv1.ExternalSecretReady,
 								Status: corev1.ConditionFalse,
 							},
 						},

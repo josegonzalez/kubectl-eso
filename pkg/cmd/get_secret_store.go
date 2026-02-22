@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -54,7 +54,7 @@ func runGetStoreVariant(cmd *cobra.Command, streams genericclioptions.IOStreams,
 	}
 
 	if clusterScoped {
-		var cssList esv1beta1.ClusterSecretStoreList
+		var cssList esv1.ClusterSecretStoreList
 		if err := clients.CRClient.List(context.TODO(), &cssList, &client.ListOptions{}); err != nil {
 			return fmt.Errorf("failed to list ClusterSecretStores: %w", err)
 		}
@@ -91,7 +91,7 @@ func runGetStoreVariant(cmd *cobra.Command, streams genericclioptions.IOStreams,
 		listOpts = append(listOpts, client.InNamespace(namespace))
 	}
 
-	var ssList esv1beta1.SecretStoreList
+	var ssList esv1.SecretStoreList
 	if err := clients.CRClient.List(context.TODO(), &ssList, listOpts...); err != nil {
 		return fmt.Errorf("failed to list SecretStores: %w", err)
 	}
@@ -138,7 +138,7 @@ func printStoreTable(out io.Writer, items []storeItem, allNamespaces bool, noHea
 	return tw.flush()
 }
 
-func getProviderName(provider *esv1beta1.SecretStoreProvider) string {
+func getProviderName(provider *esv1.SecretStoreProvider) string {
 	if provider == nil {
 		return "<none>"
 	}

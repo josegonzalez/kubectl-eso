@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	"github.com/josegonzalez/kubectl-eso/pkg/eso"
 	"github.com/josegonzalez/kubectl-eso/pkg/k8s"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,20 +21,20 @@ func TestSyncAnnotation(t *testing.T) {
 		t.Fatalf("failed to create scheme: %v", err)
 	}
 
-	es := &esv1beta1.ExternalSecret{
+	es := &esv1.ExternalSecret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-es",
 			Namespace: "default",
 		},
-		Spec: esv1beta1.ExternalSecretSpec{
-			SecretStoreRef: esv1beta1.SecretStoreRef{Name: "store"},
+		Spec: esv1.ExternalSecretSpec{
+			SecretStoreRef: esv1.SecretStoreRef{Name: "store"},
 		},
 	}
 
 	fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(es).Build()
 
 	// Simulate sync logic
-	var fetched esv1beta1.ExternalSecret
+	var fetched esv1.ExternalSecret
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Namespace: "default", Name: "my-es"}, &fetched)
 	if err != nil {
 		t.Fatalf("failed to get ExternalSecret: %v", err)
@@ -51,7 +51,7 @@ func TestSyncAnnotation(t *testing.T) {
 	}
 
 	// Verify
-	var updated esv1beta1.ExternalSecret
+	var updated esv1.ExternalSecret
 	err = fakeClient.Get(context.TODO(), client.ObjectKey{Namespace: "default", Name: "my-es"}, &updated)
 	if err != nil {
 		t.Fatalf("failed to get updated ExternalSecret: %v", err)
@@ -63,13 +63,13 @@ func TestSyncAnnotation(t *testing.T) {
 }
 
 func TestRunSync(t *testing.T) {
-	es := &esv1beta1.ExternalSecret{
+	es := &esv1.ExternalSecret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-es",
 			Namespace: "default",
 		},
-		Spec: esv1beta1.ExternalSecretSpec{
-			SecretStoreRef: esv1beta1.SecretStoreRef{Name: "store"},
+		Spec: esv1.ExternalSecretSpec{
+			SecretStoreRef: esv1.SecretStoreRef{Name: "store"},
 		},
 	}
 
