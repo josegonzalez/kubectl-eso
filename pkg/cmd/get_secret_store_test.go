@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 )
 
 func TestPrintStoreTable(t *testing.T) {
@@ -86,17 +86,17 @@ func TestPrintStoreTable(t *testing.T) {
 func TestGetProviderName(t *testing.T) {
 	tests := []struct {
 		name     string
-		provider *esv1beta1.SecretStoreProvider
+		provider *esv1.SecretStoreProvider
 		want     string
 	}{
 		{"nil provider", nil, "<none>"},
-		{"AWS", &esv1beta1.SecretStoreProvider{AWS: &esv1beta1.AWSProvider{}}, "AWS"},
-		{"AzureKV", &esv1beta1.SecretStoreProvider{AzureKV: &esv1beta1.AzureKVProvider{}}, "AzureKV"},
-		{"GCPSM", &esv1beta1.SecretStoreProvider{GCPSM: &esv1beta1.GCPSMProvider{}}, "GCPSM"},
-		{"Vault", &esv1beta1.SecretStoreProvider{Vault: &esv1beta1.VaultProvider{}}, "Vault"},
-		{"Kubernetes", &esv1beta1.SecretStoreProvider{Kubernetes: &esv1beta1.KubernetesProvider{}}, "Kubernetes"},
-		{"Fake", &esv1beta1.SecretStoreProvider{Fake: &esv1beta1.FakeProvider{}}, "Fake"},
-		{"unknown", &esv1beta1.SecretStoreProvider{}, "<unknown>"},
+		{"AWS", &esv1.SecretStoreProvider{AWS: &esv1.AWSProvider{}}, "AWS"},
+		{"AzureKV", &esv1.SecretStoreProvider{AzureKV: &esv1.AzureKVProvider{}}, "AzureKV"},
+		{"GCPSM", &esv1.SecretStoreProvider{GCPSM: &esv1.GCPSMProvider{}}, "GCPSM"},
+		{"Vault", &esv1.SecretStoreProvider{Vault: &esv1.VaultProvider{}}, "Vault"},
+		{"Kubernetes", &esv1.SecretStoreProvider{Kubernetes: &esv1.KubernetesProvider{}}, "Kubernetes"},
+		{"Fake", &esv1.SecretStoreProvider{Fake: &esv1.FakeProvider{}}, "Fake"},
+		{"unknown", &esv1.SecretStoreProvider{}, "<unknown>"},
 	}
 
 	for _, tt := range tests {

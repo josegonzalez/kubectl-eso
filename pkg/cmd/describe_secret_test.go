@@ -6,7 +6,24 @@ import (
 	"testing"
 
 	"github.com/josegonzalez/kubectl-eso/pkg/eso"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
+
+func TestDescribeSecretNoArgs(t *testing.T) {
+	var buf bytes.Buffer
+	streams := genericclioptions.IOStreams{Out: &buf, ErrOut: &buf}
+	configFlags := genericclioptions.NewConfigFlags(true)
+	cmd := NewDescribeSecretCmd(streams, configFlags)
+	cmd.SetArgs([]string{})
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for no args, got nil")
+	}
+	if !strings.Contains(err.Error(), "Secret") {
+		t.Errorf("error should contain resource type, got: %v", err)
+	}
+}
 
 func TestPrintSecretDetail(t *testing.T) {
 	tests := []struct {
@@ -15,9 +32,9 @@ func TestPrintSecretDetail(t *testing.T) {
 		namespace    string
 		secretType   string
 		labels       map[string]string
-		annotations  map[string]string
 		data         map[string][]byte
 		decode       bool
+		store        storeRef
 		wantContains []string
 		wantMissing  []string
 	}{
@@ -29,9 +46,7 @@ func TestPrintSecretDetail(t *testing.T) {
 			labels: map[string]string{
 				eso.LabelManaged: "true",
 			},
-			annotations: map[string]string{
-				eso.AnnotationStore: "my-store",
-			},
+			store: storeRef{name: "my-store", kind: "SecretStore"},
 			data: map[string][]byte{
 				"username": []byte("admin"),
 				"password": []byte("secret123"),
@@ -43,6 +58,7 @@ func TestPrintSecretDetail(t *testing.T) {
 				"Type:", "Opaque",
 				"ESO-Managed:", "Yes",
 				"Store:", "my-store",
+				"Store Kind:", "SecretStore",
 				"username", "admin",
 				"password", "secret123",
 			},
@@ -72,12 +88,36 @@ func TestPrintSecretDetail(t *testing.T) {
 			wantContains: []string{"bXlzZWNyZXR0b2tlbg=="},
 			wantMissing:  []string{"mysecrettoken"},
 		},
+		{
+			name:       "store kind shown for ClusterSecretStore",
+			secretName: "css-secret",
+			namespace:  "default",
+			secretType: "Opaque",
+			labels:     map[string]string{eso.LabelManaged: "true"},
+			store:      storeRef{name: "global-vault", kind: "ClusterSecretStore"},
+			data:       map[string][]byte{"key": []byte("val")},
+			decode:     false,
+			wantContains: []string{
+				"Store:", "global-vault",
+				"Store Kind:", "ClusterSecretStore",
+			},
+		},
+		{
+			name:        "no store lines when store is empty",
+			secretName:  "no-store",
+			namespace:   "default",
+			secretType:  "Opaque",
+			labels:      map[string]string{eso.LabelManaged: "true"},
+			data:        map[string][]byte{"key": []byte("val")},
+			decode:      false,
+			wantMissing: []string{"Store:"},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			err := printSecretDetail(&buf, tt.secretName, tt.namespace, tt.secretType, tt.labels, tt.annotations, tt.data, tt.decode)
+			err := printSecretDetail(&buf, tt.secretName, tt.namespace, tt.secretType, tt.labels, tt.data, tt.decode, tt.store)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

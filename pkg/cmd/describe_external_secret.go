@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -17,7 +17,7 @@ func NewDescribeExternalSecretCmd(streams genericclioptions.IOStreams, configFla
 		Use:     "external-secret <name>",
 		Short:   "Show details of an ExternalSecret",
 		Aliases: []string{"external-secrets", "externalsecrets.external-secrets.io"},
-		Args:    cobra.ExactArgs(1),
+		Args:    requireNameArg("ExternalSecret"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDescribeExternalSecret(cmd, streams, configFlags, args[0])
 		},
@@ -37,7 +37,7 @@ func runDescribeExternalSecret(cmd *cobra.Command, streams genericclioptions.IOS
 		return err
 	}
 
-	var es esv1beta1.ExternalSecret
+	var es esv1.ExternalSecret
 	if err := clients.CRClient.Get(context.TODO(), client.ObjectKey{Namespace: namespace, Name: name}, &es); err != nil {
 		return fmt.Errorf("failed to get ExternalSecret %q: %w", name, err)
 	}
@@ -52,7 +52,7 @@ func runDescribeExternalSecret(cmd *cobra.Command, streams genericclioptions.IOS
 	}
 }
 
-func printExternalSecretDetail(out io.Writer, es esv1beta1.ExternalSecret) error {
+func printExternalSecretDetail(out io.Writer, es esv1.ExternalSecret) error {
 	tw := newTableWriter(out)
 
 	tw.fprintf("Name:\t%s\n", es.Name)

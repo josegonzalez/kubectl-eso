@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -47,7 +47,7 @@ func runGetExternalSecret(cmd *cobra.Command, streams genericclioptions.IOStream
 		listOpts = append(listOpts, client.InNamespace(namespace))
 	}
 
-	var esList esv1beta1.ExternalSecretList
+	var esList esv1.ExternalSecretList
 	if err := clients.CRClient.List(context.TODO(), &esList, listOpts...); err != nil {
 		return fmt.Errorf("failed to list ExternalSecrets: %w", err)
 	}
@@ -62,7 +62,7 @@ func runGetExternalSecret(cmd *cobra.Command, streams genericclioptions.IOStream
 	}
 }
 
-func printExternalSecretTable(out io.Writer, items []esv1beta1.ExternalSecret, allNamespaces bool, noHeaders bool) error {
+func printExternalSecretTable(out io.Writer, items []esv1.ExternalSecret, allNamespaces bool, noHeaders bool) error {
 	tw := newTableWriter(out)
 
 	if !noHeaders {

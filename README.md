@@ -1,7 +1,7 @@
 # kubectl-eso
 
 A kubectl plugin for managing Kubernetes Secrets in the context of
-the [External Secrets Operator](https://external-secrets.io).
+the [External Secrets Operator](https://external-secrets.io) (v1 API).
 It supports annotating existing Secrets for ESO adoption,
 listing and inspecting ExternalSecrets, SecretStores, and
 ClusterSecretStores, viewing Secret data with optional base64

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -14,21 +14,21 @@ import (
 )
 
 func TestRunDescribeSecretStore(t *testing.T) {
-	ss := &esv1beta1.SecretStore{
+	ss := &esv1.SecretStore{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "my-store",
 			Namespace:         "default",
 			CreationTimestamp: metav1.NewTime(time.Now()),
 		},
-		Spec: esv1beta1.SecretStoreSpec{
-			Provider: &esv1beta1.SecretStoreProvider{
-				AWS: &esv1beta1.AWSProvider{},
+		Spec: esv1.SecretStoreSpec{
+			Provider: &esv1.SecretStoreProvider{
+				AWS: &esv1.AWSProvider{},
 			},
 		},
-		Status: esv1beta1.SecretStoreStatus{
-			Conditions: []esv1beta1.SecretStoreStatusCondition{
+		Status: esv1.SecretStoreStatus{
+			Conditions: []esv1.SecretStoreStatusCondition{
 				{
-					Type:   esv1beta1.SecretStoreReady,
+					Type:   esv1.SecretStoreReady,
 					Status: corev1.ConditionTrue,
 					Reason: "Valid",
 				},
@@ -84,20 +84,20 @@ func TestRunDescribeSecretStore(t *testing.T) {
 }
 
 func TestRunDescribeClusterSecretStore(t *testing.T) {
-	css := &esv1beta1.ClusterSecretStore{
+	css := &esv1.ClusterSecretStore{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "global-store",
 			CreationTimestamp: metav1.NewTime(time.Now()),
 		},
-		Spec: esv1beta1.SecretStoreSpec{
-			Provider: &esv1beta1.SecretStoreProvider{
-				Vault: &esv1beta1.VaultProvider{},
+		Spec: esv1.SecretStoreSpec{
+			Provider: &esv1.SecretStoreProvider{
+				Vault: &esv1.VaultProvider{},
 			},
 		},
-		Status: esv1beta1.SecretStoreStatus{
-			Conditions: []esv1beta1.SecretStoreStatusCondition{
+		Status: esv1.SecretStoreStatus{
+			Conditions: []esv1.SecretStoreStatusCondition{
 				{
-					Type:   esv1beta1.SecretStoreReady,
+					Type:   esv1.SecretStoreReady,
 					Status: corev1.ConditionTrue,
 					Reason: "Valid",
 				},

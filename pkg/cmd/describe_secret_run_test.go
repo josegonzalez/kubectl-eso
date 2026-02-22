@@ -5,10 +5,12 @@ import (
 	"strings"
 	"testing"
 
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	"github.com/josegonzalez/kubectl-eso/pkg/eso"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func TestRunDescribeSecret(t *testing.T) {
@@ -119,5 +121,45 @@ func TestRunDescribeSecretNotFound(t *testing.T) {
 	err := cmd.Execute()
 	if err == nil {
 		t.Fatal("expected error for nonexistent secret, got nil")
+	}
+}
+
+func TestRunDescribeSecretStoreFromExternalSecret(t *testing.T) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "eso-secret",
+			Namespace: "default",
+			Labels:    map[string]string{eso.LabelManaged: "true"},
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{"key": []byte("val")},
+	}
+
+	es := &esv1.ExternalSecret{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-es", Namespace: "default"},
+		Spec: esv1.ExternalSecretSpec{
+			SecretStoreRef: esv1.SecretStoreRef{Name: "vault", Kind: "ClusterSecretStore"},
+			Target:         esv1.ExternalSecretTarget{Name: "eso-secret"},
+		},
+	}
+
+	cleanup := setupFakeClients("default", []client.Object{es}, secret)
+	defer cleanup()
+
+	var buf bytes.Buffer
+	streams := genericclioptions.IOStreams{Out: &buf}
+	configFlags := genericclioptions.NewConfigFlags(true)
+	cmd := NewDescribeCmd(streams, configFlags)
+	cmd.SetArgs([]string{"secret", "eso-secret"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := buf.String()
+	for _, want := range []string{"Store:", "vault", "Store Kind:", "ClusterSecretStore"} {
+		if !strings.Contains(output, want) {
+			t.Errorf("output missing %q:\n%s", want, output)
+		}
 	}
 }

@@ -19,7 +19,7 @@ func NewDescribeSecretCmd(streams genericclioptions.IOStreams, configFlags *gene
 		Use:     "secret <name>",
 		Short:   "Show details of a Secret",
 		Aliases: []string{"secrets"},
-		Args:    cobra.ExactArgs(1),
+		Args:    requireNameArg("Secret"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDescribeSecret(cmd, streams, configFlags, args[0])
 		},
@@ -54,6 +54,24 @@ func runDescribeSecret(cmd *cobra.Command, streams genericclioptions.IOStreams, 
 		return fmt.Errorf("secret %q is a Helm-managed release secret and cannot be described by this plugin", name)
 	}
 
+	// Resolve store: annotation first, then ExternalSecret lookup
+	var store storeRef
+	if secret.Annotations != nil {
+		if storeName, ok := secret.Annotations[eso.AnnotationStore]; ok {
+			kind := "SecretStore"
+			if k, ok := secret.Annotations[eso.AnnotationStoreKind]; ok {
+				kind = k
+			}
+			store = storeRef{name: storeName, kind: kind}
+		}
+	}
+	if store.name == "" && secret.Labels != nil && secret.Labels[eso.LabelManaged] == "true" {
+		storeMap := buildSecretStoreMap(context.TODO(), clients.CRClient, namespace)
+		if ref, ok := storeMap[namespace+"/"+secret.Name]; ok {
+			store = ref
+		}
+	}
+
 	switch output {
 	case "json":
 		return printJSON(streams.Out, secret)
@@ -61,11 +79,11 @@ func runDescribeSecret(cmd *cobra.Command, streams genericclioptions.IOStreams, 
 		return printYAML(streams.Out, secret)
 	default:
 		return printSecretDetail(streams.Out, secret.Name, secret.Namespace,
-			string(secret.Type), secret.Labels, secret.Annotations, secret.Data, decode)
+			string(secret.Type), secret.Labels, secret.Data, decode, store)
 	}
 }
 
-func printSecretDetail(out io.Writer, name, namespace, secretType string, labels, annotations map[string]string, data map[string][]byte, decode bool) error {
+func printSecretDetail(out io.Writer, name, namespace, secretType string, labels map[string]string, data map[string][]byte, decode bool, store storeRef) error {
 	tw := newTableWriter(out)
 
 	tw.fprintf("Name:\t%s\n", name)
@@ -82,10 +100,9 @@ func printSecretDetail(out io.Writer, name, namespace, secretType string, labels
 		tw.fprintln("\nWARNING: This secret is not managed by External Secrets Operator")
 	}
 
-	if annotations != nil {
-		if store, ok := annotations[eso.AnnotationStore]; ok {
-			tw.fprintf("Store:\t%s\n", store)
-		}
+	if store.name != "" {
+		tw.fprintf("Store:\t%s\n", store.name)
+		tw.fprintf("Store Kind:\t%s\n", store.kind)
 	}
 
 	tw.fprintln("\nData:")

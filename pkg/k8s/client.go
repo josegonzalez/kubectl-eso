@@ -1,7 +1,7 @@
 package k8s
 
 import (
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -15,7 +15,7 @@ func NewScheme() (*runtime.Scheme, error) {
 	if err := corev1.AddToScheme(s); err != nil {
 		return nil, err
 	}
-	if err := esv1beta1.AddToScheme(s); err != nil {
+	if err := esv1.AddToScheme(s); err != nil {
 		return nil, err
 	}
 	return s, nil

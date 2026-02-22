@@ -1,17 +1,33 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"text/tabwriter"
 	"time"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	"github.com/josegonzalez/kubectl-eso/pkg/k8s"
+	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
+
+// requireNameArg returns a cobra.PositionalArgs validator that requires exactly one name argument.
+func requireNameArg(resourceType string) cobra.PositionalArgs {
+	return func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return fmt.Errorf("%s name is required", resourceType)
+		}
+		if len(args) > 1 {
+			return fmt.Errorf("expected exactly one %s name, got %d", resourceType, len(args))
+		}
+		return nil
+	}
+}
 
 // tableWriter wraps a tabwriter.Writer and tracks the first write error.
 type tableWriter struct {
@@ -77,7 +93,7 @@ var getNamespaceFn = func(configFlags *genericclioptions.ConfigFlags) (string, e
 }
 
 // getStoreReadyStatus extracts Ready status from SecretStore conditions.
-func getStoreReadyStatus(conditions []esv1beta1.SecretStoreStatusCondition) string {
+func getStoreReadyStatus(conditions []esv1.SecretStoreStatusCondition) string {
 	for _, c := range conditions {
 		if c.Type == "Ready" {
 			return string(c.Status)
@@ -88,9 +104,9 @@ func getStoreReadyStatus(conditions []esv1beta1.SecretStoreStatusCondition) stri
 }
 
 // getESReadyStatus extracts Ready status from ExternalSecret conditions.
-func getESReadyStatus(conditions []esv1beta1.ExternalSecretStatusCondition) string {
+func getESReadyStatus(conditions []esv1.ExternalSecretStatusCondition) string {
 	for _, c := range conditions {
-		if c.Type == esv1beta1.ExternalSecretReady {
+		if c.Type == esv1.ExternalSecretReady {
 			if c.Status == "True" {
 				return "True"
 			}
@@ -103,7 +119,7 @@ func getESReadyStatus(conditions []esv1beta1.ExternalSecretStatusCondition) stri
 }
 
 // printConditionsTable prints a SecretStore conditions table.
-func printConditionsTable(tw *tableWriter, conditions []esv1beta1.SecretStoreStatusCondition) {
+func printConditionsTable(tw *tableWriter, conditions []esv1.SecretStoreStatusCondition) {
 	tw.fprintln("\nConditions:")
 	tw.fprintf("  TYPE\tSTATUS\tREASON\tMESSAGE\tLAST TRANSITION\n")
 
@@ -155,4 +171,52 @@ func printYAML(out io.Writer, obj interface{}) error {
 	_, err = fmt.Fprint(out, string(data))
 
 	return err
+}
+
+// storeRef holds the resolved store name and kind for a Secret.
+type storeRef struct {
+	name string
+	kind string
+}
+
+// buildSecretStoreMap lists ExternalSecrets and builds a map from
+// "namespace/targetSecretName" to storeRef. This enables reverse
+// lookup of which store manages a given Secret.
+func buildSecretStoreMap(ctx context.Context, crClient client.Client, namespace string) map[string]storeRef {
+	var listOpts []client.ListOption
+	if namespace != "" {
+		listOpts = append(listOpts, client.InNamespace(namespace))
+	}
+
+	var esList esv1.ExternalSecretList
+	if err := crClient.List(ctx, &esList, listOpts...); err != nil {
+		return map[string]storeRef{}
+	}
+
+	m := make(map[string]storeRef, len(esList.Items))
+	for _, es := range esList.Items {
+		targetName := es.Spec.Target.Name
+		if targetName == "" {
+			targetName = es.Name
+		}
+
+		key := es.Namespace + "/" + targetName
+
+		// first-match-wins: skip if already mapped
+		if _, exists := m[key]; exists {
+			continue
+		}
+
+		kind := es.Spec.SecretStoreRef.Kind
+		if kind == "" {
+			kind = "SecretStore"
+		}
+
+		m[key] = storeRef{
+			name: es.Spec.SecretStoreRef.Name,
+			kind: kind,
+		}
+	}
+
+	return m
 }

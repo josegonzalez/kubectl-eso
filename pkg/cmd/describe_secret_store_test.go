@@ -5,27 +5,60 @@ import (
 	"strings"
 	"testing"
 
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esv1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
+
+func TestDescribeSecretStoreNoArgs(t *testing.T) {
+	var buf bytes.Buffer
+	streams := genericclioptions.IOStreams{Out: &buf, ErrOut: &buf}
+	configFlags := genericclioptions.NewConfigFlags(true)
+	cmd := NewDescribeSecretStoreCmd(streams, configFlags)
+	cmd.SetArgs([]string{})
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for no args, got nil")
+	}
+	if !strings.Contains(err.Error(), "SecretStore") {
+		t.Errorf("error should contain resource type, got: %v", err)
+	}
+}
+
+func TestDescribeClusterSecretStoreNoArgs(t *testing.T) {
+	var buf bytes.Buffer
+	streams := genericclioptions.IOStreams{Out: &buf, ErrOut: &buf}
+	configFlags := genericclioptions.NewConfigFlags(true)
+	cmd := NewDescribeClusterSecretStoreCmd(streams, configFlags)
+	cmd.SetArgs([]string{})
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for no args, got nil")
+	}
+	if !strings.Contains(err.Error(), "ClusterSecretStore") {
+		t.Errorf("error should contain resource type, got: %v", err)
+	}
+}
 
 func TestPrintStoreDetail(t *testing.T) {
 	tests := []struct {
 		name         string
 		storeName    string
 		namespace    string
-		provider     *esv1beta1.SecretStoreProvider
-		conditions   []esv1beta1.SecretStoreStatusCondition
+		provider     *esv1.SecretStoreProvider
+		conditions   []esv1.SecretStoreStatusCondition
 		wantContains []string
 	}{
 		{
 			name:      "ready AWS store (namespaced)",
 			storeName: "aws-store",
 			namespace: "default",
-			provider:  &esv1beta1.SecretStoreProvider{AWS: &esv1beta1.AWSProvider{}},
-			conditions: []esv1beta1.SecretStoreStatusCondition{
+			provider:  &esv1.SecretStoreProvider{AWS: &esv1.AWSProvider{}},
+			conditions: []esv1.SecretStoreStatusCondition{
 				{
-					Type:    esv1beta1.SecretStoreReady,
+					Type:    esv1.SecretStoreReady,
 					Status:  corev1.ConditionTrue,
 					Reason:  "Valid",
 					Message: "store is valid",
@@ -44,10 +77,10 @@ func TestPrintStoreDetail(t *testing.T) {
 			name:      "unhealthy Vault store (namespaced)",
 			storeName: "vault-store",
 			namespace: "production",
-			provider:  &esv1beta1.SecretStoreProvider{Vault: &esv1beta1.VaultProvider{}},
-			conditions: []esv1beta1.SecretStoreStatusCondition{
+			provider:  &esv1.SecretStoreProvider{Vault: &esv1.VaultProvider{}},
+			conditions: []esv1.SecretStoreStatusCondition{
 				{
-					Type:    esv1beta1.SecretStoreReady,
+					Type:    esv1.SecretStoreReady,
 					Status:  corev1.ConditionFalse,
 					Reason:  "ConfigError",
 					Message: "unable to connect",
@@ -63,10 +96,10 @@ func TestPrintStoreDetail(t *testing.T) {
 			name:      "ready cluster store (no namespace)",
 			storeName: "global-store",
 			namespace: "",
-			provider:  &esv1beta1.SecretStoreProvider{GCPSM: &esv1beta1.GCPSMProvider{}},
-			conditions: []esv1beta1.SecretStoreStatusCondition{
+			provider:  &esv1.SecretStoreProvider{GCPSM: &esv1.GCPSMProvider{}},
+			conditions: []esv1.SecretStoreStatusCondition{
 				{
-					Type:   esv1beta1.SecretStoreReady,
+					Type:   esv1.SecretStoreReady,
 					Status: corev1.ConditionTrue,
 					Reason: "Valid",
 				},
