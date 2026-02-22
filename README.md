@@ -40,7 +40,7 @@ make test
 # Lint
 make lint
 
-# Install kubectl-eso and kubectl_complete-eso to $GOPATH/bin
+# Install kubectl-eso and kubectl_complete-eso to ~/.krew/bin
 make install
 ```
 

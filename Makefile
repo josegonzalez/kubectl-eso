@@ -7,7 +7,6 @@ LDFLAGS := -s -w \
 	-X $(MODULE)/pkg/cmd.Version=$(VERSION) \
 	-X $(MODULE)/pkg/cmd.Commit=$(COMMIT) \
 	-X $(MODULE)/pkg/cmd.Date=$(DATE)
-GOPATH := $(shell go env GOPATH)
 
 .PHONY: build install test clean lint fmt vet go-lint yaml-lint markdown-lint krew-install
 
@@ -16,9 +15,10 @@ build:
 	go build -ldflags "$(LDFLAGS)" -o bin/$(BINARY_NAME) ./cmd/kubectl-eso
 
 install: build
-	cp bin/$(BINARY_NAME) $(GOPATH)/bin/$(BINARY_NAME)
-	cp scripts/kubectl_complete-eso $(GOPATH)/bin/kubectl_complete-eso
-	chmod +x $(GOPATH)/bin/kubectl_complete-eso
+	@mkdir -p $(HOME)/.krew/bin
+	cp bin/$(BINARY_NAME) $(HOME)/.krew/bin/$(BINARY_NAME)
+	cp scripts/kubectl_complete-eso $(HOME)/.krew/bin/kubectl_complete-eso
+	chmod +x $(HOME)/.krew/bin/kubectl_complete-eso
 
 test:
 	go test ./... -race -count=1
