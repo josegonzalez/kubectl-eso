@@ -18,6 +18,7 @@ func TestPrintSecretTable(t *testing.T) {
 		secrets       []corev1.Secret
 		allNamespaces bool
 		noHeaders     bool
+		storeMap      map[string]storeRef
 		wantContains  []string
 		wantMissing   []string
 	}{
@@ -89,12 +90,85 @@ func TestPrintSecretTable(t *testing.T) {
 			},
 			wantContains: []string{"NAMESPACE", "production"},
 		},
+		{
+			name:          "store from map when no annotation",
+			allNamespaces: false,
+			noHeaders:     true,
+			secrets: []corev1.Secret{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "eso-secret",
+						Namespace:         "default",
+						CreationTimestamp: metav1.NewTime(now),
+						Labels:            map[string]string{eso.LabelManaged: "true"},
+					},
+					Type: corev1.SecretTypeOpaque,
+				},
+			},
+			storeMap:     map[string]storeRef{"default/eso-secret": {name: "vault", kind: "SecretStore"}},
+			wantContains: []string{"eso-secret", "Yes", "vault"},
+		},
+		{
+			name:          "annotation takes priority over map",
+			allNamespaces: false,
+			noHeaders:     true,
+			secrets: []corev1.Secret{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "eso-secret",
+						Namespace:         "default",
+						CreationTimestamp: metav1.NewTime(now),
+						Labels:            map[string]string{eso.LabelManaged: "true"},
+						Annotations:       map[string]string{eso.AnnotationStore: "annotated-store"},
+					},
+					Type: corev1.SecretTypeOpaque,
+				},
+			},
+			storeMap:     map[string]storeRef{"default/eso-secret": {name: "vault", kind: "SecretStore"}},
+			wantContains: []string{"annotated-store"},
+			wantMissing:  []string{"vault"},
+		},
+		{
+			name:          "no match in map",
+			allNamespaces: false,
+			noHeaders:     true,
+			secrets: []corev1.Secret{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "other-secret",
+						Namespace:         "default",
+						CreationTimestamp: metav1.NewTime(now),
+						Labels:            map[string]string{eso.LabelManaged: "true"},
+					},
+					Type: corev1.SecretTypeOpaque,
+				},
+			},
+			storeMap:    map[string]storeRef{"default/different": {name: "vault", kind: "SecretStore"}},
+			wantMissing: []string{"vault"},
+		},
+		{
+			name:          "non-managed secret skips map lookup",
+			allNamespaces: false,
+			noHeaders:     true,
+			secrets: []corev1.Secret{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "plain-secret",
+						Namespace:         "default",
+						CreationTimestamp: metav1.NewTime(now),
+					},
+					Type: corev1.SecretTypeOpaque,
+				},
+			},
+			storeMap:    map[string]storeRef{"default/plain-secret": {name: "vault", kind: "SecretStore"}},
+			wantMissing: []string{"vault"},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			err := printSecretTable(&buf, tt.secrets, tt.allNamespaces, tt.noHeaders)
+			err := printSecretTable(&buf, tt.secrets, tt.allNamespaces, tt.noHeaders, tt.storeMap)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

@@ -61,17 +61,19 @@ func runGetSecret(cmd *cobra.Command, streams genericclioptions.IOStreams, confi
 		}
 	}
 
+	storeMap := buildSecretStoreMap(context.TODO(), clients.CRClient, listNS)
+
 	switch output {
 	case "json":
 		return printJSON(streams.Out, filtered)
 	case "yaml":
 		return printYAML(streams.Out, filtered)
 	default:
-		return printSecretTable(streams.Out, filtered, allNamespaces, noHeaders)
+		return printSecretTable(streams.Out, filtered, allNamespaces, noHeaders, storeMap)
 	}
 }
 
-func printSecretTable(out io.Writer, secrets []corev1.Secret, allNamespaces bool, noHeaders bool) error {
+func printSecretTable(out io.Writer, secrets []corev1.Secret, allNamespaces bool, noHeaders bool, storeMap map[string]storeRef) error {
 	tw := newTableWriter(out)
 
 	if !noHeaders {
@@ -94,6 +96,11 @@ func printSecretTable(out io.Writer, secrets []corev1.Secret, allNamespaces bool
 		store := ""
 		if s.Annotations != nil {
 			store = s.Annotations[eso.AnnotationStore]
+		}
+		if store == "" && managed == "Yes" {
+			if ref, ok := storeMap[s.Namespace+"/"+s.Name]; ok {
+				store = ref.name
+			}
 		}
 
 		age := formatAge(s.CreationTimestamp.Time)
