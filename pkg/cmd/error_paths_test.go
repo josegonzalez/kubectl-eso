@@ -13,7 +13,6 @@ func TestGetClientsError(t *testing.T) {
 		name string
 		args []string
 	}{
-		{"annotate", []string{"annotate", "my-secret"}},
 		{"sync", []string{"sync", "my-es"}},
 		{"get external-secret", []string{"get", "external-secret"}},
 		{"get secret", []string{"get", "secret"}},
@@ -51,7 +50,6 @@ func TestGetNamespaceError(t *testing.T) {
 		name string
 		args []string
 	}{
-		{"annotate", []string{"annotate", "my-secret"}},
 		{"sync", []string{"sync", "my-es"}},
 		{"get external-secret", []string{"get", "external-secret"}},
 		{"get secret", []string{"get", "secret"}},

@@ -49,13 +49,11 @@ func TestPrintSecretTable(t *testing.T) {
 						Labels: map[string]string{
 							eso.LabelManaged: "true",
 						},
-						Annotations: map[string]string{
-							eso.AnnotationStore: "my-store",
-						},
 					},
 					Type: corev1.SecretTypeOpaque,
 				},
 			},
+			storeMap:     map[string]storeRef{"default/my-secret": {name: "my-store", kind: "SecretStore"}},
 			wantContains: []string{"my-secret", "Opaque", "Yes", "my-store"},
 		},
 		{
@@ -91,7 +89,7 @@ func TestPrintSecretTable(t *testing.T) {
 			wantContains: []string{"NAMESPACE", "production"},
 		},
 		{
-			name:          "store from map when no annotation",
+			name:          "store from map",
 			allNamespaces: false,
 			noHeaders:     true,
 			secrets: []corev1.Secret{
@@ -107,26 +105,6 @@ func TestPrintSecretTable(t *testing.T) {
 			},
 			storeMap:     map[string]storeRef{"default/eso-secret": {name: "vault", kind: "SecretStore"}},
 			wantContains: []string{"eso-secret", "Yes", "vault"},
-		},
-		{
-			name:          "annotation takes priority over map",
-			allNamespaces: false,
-			noHeaders:     true,
-			secrets: []corev1.Secret{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:              "eso-secret",
-						Namespace:         "default",
-						CreationTimestamp: metav1.NewTime(now),
-						Labels:            map[string]string{eso.LabelManaged: "true"},
-						Annotations:       map[string]string{eso.AnnotationStore: "annotated-store"},
-					},
-					Type: corev1.SecretTypeOpaque,
-				},
-			},
-			storeMap:     map[string]storeRef{"default/eso-secret": {name: "vault", kind: "SecretStore"}},
-			wantContains: []string{"annotated-store"},
-			wantMissing:  []string{"vault"},
 		},
 		{
 			name:          "no match in map",

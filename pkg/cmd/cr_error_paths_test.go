@@ -207,38 +207,6 @@ func TestRunGetSecretListError(t *testing.T) {
 	}
 }
 
-func TestRunAnnotateUpdateError(t *testing.T) {
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-secret",
-			Namespace: "default",
-		},
-		Type: corev1.SecretTypeOpaque,
-	}
-
-	clientset := fake.NewClientset(secret)
-	clientset.PrependReactor("update", "secrets", func(action k8stesting.Action) (bool, runtime.Object, error) {
-		return true, nil, fmt.Errorf("update error")
-	})
-
-	cleanup := setupFakeClientsWithClientset("default", nil, clientset)
-	defer cleanup()
-
-	var buf bytes.Buffer
-	streams := genericclioptions.IOStreams{Out: &buf, ErrOut: &buf}
-	configFlags := genericclioptions.NewConfigFlags(true)
-	cmd := NewAnnotateCmd(streams, configFlags)
-	cmd.SetArgs([]string{"my-secret"})
-
-	err := cmd.Execute()
-	if err == nil {
-		t.Fatal("expected error from update, got nil")
-	}
-	if !strings.Contains(err.Error(), "failed to update Secret") {
-		t.Errorf("expected 'failed to update Secret', got %v", err)
-	}
-}
-
 func TestRunGetSecretStoreNoHeaders(t *testing.T) {
 	ss := &esv1.SecretStore{
 		ObjectMeta: metav1.ObjectMeta{

@@ -54,18 +54,9 @@ func runDescribeSecret(cmd *cobra.Command, streams genericclioptions.IOStreams, 
 		return fmt.Errorf("secret %q is a Helm-managed release secret and cannot be described by this plugin", name)
 	}
 
-	// Resolve store: annotation first, then ExternalSecret lookup
+	// Resolve store from ExternalSecret lookup
 	var store storeRef
-	if secret.Annotations != nil {
-		if storeName, ok := secret.Annotations[eso.AnnotationStore]; ok {
-			kind := "SecretStore"
-			if k, ok := secret.Annotations[eso.AnnotationStoreKind]; ok {
-				kind = k
-			}
-			store = storeRef{name: storeName, kind: kind}
-		}
-	}
-	if store.name == "" && secret.Labels != nil && secret.Labels[eso.LabelManaged] == "true" {
+	if secret.Labels != nil && secret.Labels[eso.LabelManaged] == "true" {
 		storeMap := buildSecretStoreMap(context.TODO(), clients.CRClient, namespace)
 		if ref, ok := storeMap[namespace+"/"+secret.Name]; ok {
 			store = ref

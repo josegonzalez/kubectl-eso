@@ -19,13 +19,18 @@ func TestRunDescribeSecret(t *testing.T) {
 			Name:      "my-secret",
 			Namespace: "default",
 			Labels:    map[string]string{eso.LabelManaged: "true"},
-			Annotations: map[string]string{
-				eso.AnnotationStore: "my-store",
-			},
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
 			"username": []byte("admin"),
+		},
+	}
+
+	es := &esv1.ExternalSecret{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-es", Namespace: "default"},
+		Spec: esv1.ExternalSecretSpec{
+			SecretStoreRef: esv1.SecretStoreRef{Name: "my-store", Kind: "SecretStore"},
+			Target:         esv1.ExternalSecretTarget{Name: "my-secret"},
 		},
 	}
 
@@ -58,7 +63,7 @@ func TestRunDescribeSecret(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cleanup := setupFakeClients("default", nil, secret)
+			cleanup := setupFakeClients("default", []client.Object{es}, secret)
 			defer cleanup()
 
 			var buf bytes.Buffer
