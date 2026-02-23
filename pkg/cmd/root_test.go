@@ -32,7 +32,7 @@ func TestNewRootCmd(t *testing.T) {
 	streams := genericclioptions.IOStreams{}
 	cmd := NewRootCmd(streams)
 
-	expected := []string{"get", "describe", "annotate", "sync", "version", "completion"}
+	expected := []string{"get", "describe", "sync", "version", "completion"}
 	subs := cmd.Commands()
 	names := make(map[string]bool, len(subs))
 	for _, c := range subs {

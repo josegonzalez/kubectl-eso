@@ -94,10 +94,7 @@ func printSecretTable(out io.Writer, secrets []corev1.Secret, allNamespaces bool
 		}
 
 		store := ""
-		if s.Annotations != nil {
-			store = s.Annotations[eso.AnnotationStore]
-		}
-		if store == "" && managed == "Yes" {
+		if managed == "Yes" {
 			if ref, ok := storeMap[s.Namespace+"/"+s.Name]; ok {
 				store = ref.name
 			}

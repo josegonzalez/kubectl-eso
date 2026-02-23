@@ -2,8 +2,7 @@
 
 A kubectl plugin for managing Kubernetes Secrets in the context of
 the [External Secrets Operator](https://external-secrets.io) (v1 API).
-It supports annotating existing Secrets for ESO adoption,
-listing and inspecting ExternalSecrets, SecretStores, and
+It supports listing and inspecting ExternalSecrets, SecretStores, and
 ClusterSecretStores, viewing Secret data with optional base64
 decoding, forcing re-sync of ExternalSecrets, and shell completion
 for bash, zsh, fish, and powershell. Helm release secrets are
@@ -56,7 +55,6 @@ kubectl eso COMMAND [SUBCOMMAND] [ARGS...] [FLAGS...]
 
 | Command | Description |
 | ------- | ----------- |
-| `annotate` | Annotate an existing Secret for ESO adoption |
 | `get` | List resources (ExternalSecrets, Secrets, stores) |
 | `describe` | Show detailed info for a resource |
 | `sync` | Force re-sync an ExternalSecret |
@@ -95,40 +93,6 @@ Additional flags:
 | `--no-headers` | | Omit table header row | `false` |
 
 ## Commands
-
-### `kubectl eso annotate SECRET [flags]`
-
-Annotates an existing Kubernetes Secret for ESO adoption.
-Adds labels and annotations so a future ExternalSecret with
-`creationPolicy: Merge` can adopt the Secret.
-
-**Requires:** `get` and `update` on `secrets`
-
-**Labels/annotations applied:**
-
-- Label: `reconcile.external-secrets.io/managed: "true"`
-- Annotation: `kubectl-eso.io/imported: "true"`
-- Annotation: `kubectl-eso.io/imported-at: <RFC3339 timestamp>`
-- Annotation: `kubectl-eso.io/store: <name>` (if `--store` provided)
-- Annotation: `kubectl-eso.io/store-kind: <kind>` (if `--store` provided)
-
-**Flags:**
-
-| Flag | Description | Default |
-| ---- | ----------- | ------- |
-| `--dry-run` | Output annotated Secret as YAML without applying | `false` |
-| `--store` | Name of the SecretStore or ClusterSecretStore | |
-| `--store-kind` | Kind of the store | `SecretStore` |
-
-**Examples:**
-
-```bash
-# Annotate a secret for ESO adoption
-kubectl eso annotate my-secret --store my-store
-
-# Annotate with dry-run (outputs YAML)
-kubectl eso annotate my-secret --store my-store --dry-run
-```
 
 ### `kubectl eso get external-secret [flags]`
 
@@ -345,7 +309,7 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "list", "update"]
+    verbs: ["get", "list"]
   - apiGroups: ["external-secrets.io"]
     resources: ["externalsecrets"]
     verbs: ["get", "list", "update"]

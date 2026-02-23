@@ -36,7 +36,6 @@ func NewRootCmd(streams genericclioptions.IOStreams) *cobra.Command {
 	cmd.AddCommand(NewCompletionCmd(streams))
 	cmd.AddCommand(NewGetCmd(streams, configFlags))
 	cmd.AddCommand(NewDescribeCmd(streams, configFlags))
-	cmd.AddCommand(NewAnnotateCmd(streams, configFlags))
 	cmd.AddCommand(NewSyncCmd(streams, configFlags))
 
 	return cmd

@@ -9,10 +9,6 @@ func TestConstants(t *testing.T) {
 		want string
 	}{
 		{"LabelManaged", LabelManaged, "reconcile.external-secrets.io/managed"},
-		{"AnnotationImported", AnnotationImported, "kubectl-eso.io/imported"},
-		{"AnnotationImportedAt", AnnotationImportedAt, "kubectl-eso.io/imported-at"},
-		{"AnnotationStore", AnnotationStore, "kubectl-eso.io/store"},
-		{"AnnotationStoreKind", AnnotationStoreKind, "kubectl-eso.io/store-kind"},
 		{"AnnotationForceSync", AnnotationForceSync, "kubectl-eso.io/force-sync"},
 		{"HelmSecretType", HelmSecretType, "helm.sh/release.v1"},
 	}
