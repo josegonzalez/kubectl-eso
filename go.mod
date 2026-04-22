@@ -5,10 +5,10 @@ go 1.25.7
 require (
 	github.com/external-secrets/external-secrets/apis v0.0.0-20260216201819-b22d223640ec
 	github.com/spf13/cobra v1.10.2
-	k8s.io/api v0.35.3
-	k8s.io/apimachinery v0.35.3
-	k8s.io/cli-runtime v0.35.3
-	k8s.io/client-go v0.35.3
+	k8s.io/api v0.35.4
+	k8s.io/apimachinery v0.35.4
+	k8s.io/cli-runtime v0.35.4
+	k8s.io/client-go v0.35.4
 	sigs.k8s.io/controller-runtime v0.23.3
 	sigs.k8s.io/yaml v1.6.0
 )
